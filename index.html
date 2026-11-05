@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EkunesWorld — Ekunes Journal</title>
+  <meta name="description" content="Ekunes Journal by Enerel Ekune: stories, articles, style and interviews in Mongolian, English, Korean and Chinese.">
+  <meta name="theme-color" content="#ECE8E0" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#101828" media="(prefers-color-scheme: dark)">
+
+  <!-- Social sharing preview. Add assets/images/share.jpg (1200×630) and uncomment the image line. -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="EkunesWorld">
+  <meta property="og:title" content="EkunesWorld — Ekunes Journal">
+  <meta property="og:description" content="Stories beyond the surface. A journal exploring creativity, identity, fashion and the human experience.">
+  <!-- <meta property="og:image" content="https://YOUR-DOMAIN/assets/images/share.jpg"> -->
+
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:ital,wght@0,400;0,500;1,400&family=Noto+Serif:ital,wght@0,400;1,400&family=Noto+Sans:wght@400;500&display=swap">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script>
+    /* Apply the saved theme and language before the page paints. */
+    (function () {
+      try {
+        var th = localStorage.getItem("ekunes-theme");
+        if (th) document.documentElement.setAttribute("data-theme", th);
+        var map = { mn: "mn", en: "en", ko: "ko", zh: "zh-Hans" };
+        var l = localStorage.getItem("ekunes-lang");
+        if (l && map[l]) document.documentElement.lang = map[l];
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+  <a class="skip" href="#app" data-i18n="ui.skip">Skip to content</a>
+  <div class="progress" id="progress" aria-hidden="true"></div>
+
+  <!-- Masthead (desktop) -->
+  <header class="masthead">
+    <p class="masthead-date" id="today"></p>
+    <a class="wordmark" href="#" aria-label="EkunesWorld">
+      <span class="wm">EKUNES</span><span class="wm-sub">World</span>
+    </a>
+    <div class="masthead-social social" data-social></div>
+  </header>
+
+  <!-- Navigation bar (sticky) -->
+  <div class="navbar" id="navbar">
+    <div class="navbar-inner">
+      <div class="nav-left">
+        <button class="icon-btn menu-btn" id="menuOpen" type="button" aria-controls="menu" aria-expanded="false" aria-label="Open menu"><span></span><span></span></button>
+        <a class="mini-brand" href="#" aria-label="EkunesWorld">EKUNES <em>World</em></a>
+      </div>
+      <nav class="nav-center" aria-label="Primary">
+        <ul class="nav" id="nav"></ul>
+        <a class="mobile-brand" href="#" aria-label="EkunesWorld"><span class="wm">EKUNES</span><span class="wm-sub">World</span></a>
+      </nav>
+      <div class="nav-right">
+        <div class="lang" data-lang-switch></div>
+        <button class="icon-btn theme-btn" type="button" data-theme-toggle></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile menu -->
+  <div class="menu" id="menu" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Menu">
+    <div class="menu-top">
+      <a class="mobile-brand" href="#" aria-label="EkunesWorld"><span class="wm">EKUNES</span><span class="wm-sub">World</span></a>
+      <button class="icon-btn" id="menuClose" type="button" aria-label="Close menu">
+        <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <ul class="menu-list" id="menuList"></ul>
+    <div class="menu-foot">
+      <div class="menu-langs" id="menuLangs"></div>
+      <div class="menu-foot-row">
+        <div class="social" data-social></div>
+        <button class="icon-btn" type="button" data-theme-toggle></button>
+      </div>
+    </div>
+  </div>
+
+  <main id="app" tabindex="-1"></main>
+
+  <footer class="footer">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a class="wordmark wordmark--left" href="#" aria-label="EkunesWorld"><span class="wm">EKUNES</span><span class="wm-sub">World</span></a>
+        <p data-i18n="footer.tagline"></p>
+        <div class="social" data-social></div>
+      </div>
+      <div>
+        <h2 data-i18n="footer.journal"></h2>
+        <ul id="footJournal"></ul>
+      </div>
+      <div>
+        <h2 data-i18n="footer.connect"></h2>
+        <ul id="footConnect"></ul>
+      </div>
+      <div>
+        <h2 data-i18n="ui.language"></h2>
+        <ul id="footLangs" class="foot-langs"></ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© <span id="year"></span> EkunesWorld. <span data-i18n="footer.rights"></span></p>
+      <button class="text-link" type="button" data-top data-i18n="footer.top"></button>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <noscript>
+    <p class="noscript">Please enable JavaScript to read Ekunes Journal. · Ekunes Journal-ыг уншихын тулд JavaScript-ийг идэвхжүүлнэ үү.</p>
+  </noscript>
+
+  <script src="assets/js/content.js"></script>
+  <script src="assets/js/i18n.js"></script>
+  <script src="assets/js/main.js"></script>
+</body>
+</html>
