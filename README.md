@@ -10,7 +10,8 @@ index.html              the page shell (header, menu, footer)
 favicon.svg             browser tab icon
 assets/css/style.css    all styling (colours and fonts are at the top)
 assets/js/content.js    ← EDIT THIS: settings, social links, sections, posts
-assets/js/i18n.js       ← EDIT THIS: menu, button and form text in 4 languages
+assets/js/translations.js ← ja, fr, ru, es, pt, de, nl versions of content.js (matched by id/slug)
+assets/js/i18n.js       ← EDIT THIS: menu, button and form text in 11 languages
 assets/js/main.js       page logic (no need to edit)
 assets/images/          put your photos here
 ```
@@ -80,7 +81,7 @@ visitor's own email app instead.
 ## Languages
 
 The site picks the visitor's browser language, and remembers their choice.
-Link to a specific language with `?lang=mn`, `?lang=en`, `?lang=ko` or `?lang=zh`,
+Link to a specific language with `?lang=mn`, `en`, `ko`, `zh`, `ja`, `fr`, `ru`, `es`, `pt`, `de` or `nl` (e.g. `?lang=ja`),
 for example `https://your-domain/?lang=mn`.
 
 ## Preview on your computer

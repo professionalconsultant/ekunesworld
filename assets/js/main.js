@@ -12,16 +12,26 @@
 
   /* ---------- Languages ---------- */
   const LANGS = {
-    mn: { name: "Монгол",  short: "MN", html: "mn",      locale: "mn-MN" },
-    en: { name: "English", short: "EN", html: "en",      locale: "en-GB" },
-    ko: { name: "한국어",   short: "KO", html: "ko",      locale: "ko-KR" },
-    zh: { name: "中文",     short: "中文", html: "zh-Hans", locale: "zh-CN" }
+    mn: { name: "Монгол",     short: "MN", html: "mn",      locale: "mn-MN" },
+    en: { name: "English",    short: "EN", html: "en",      locale: "en-GB" },
+    ko: { name: "한국어",      short: "KO", html: "ko",      locale: "ko-KR" },
+    zh: { name: "中文",        short: "中文", html: "zh-Hans", locale: "zh-CN" },
+    ja: { name: "日本語",      short: "日本語", html: "ja",    locale: "ja-JP" },
+    fr: { name: "Français",   short: "FR", html: "fr",      locale: "fr-FR" },
+    ru: { name: "Русский",    short: "RU", html: "ru",      locale: "ru-RU" },
+    es: { name: "Español",    short: "ES", html: "es",      locale: "es-ES" },
+    pt: { name: "Português",  short: "PT", html: "pt",      locale: "pt-BR" },
+    de: { name: "Deutsch",    short: "DE", html: "de",      locale: "de-DE" },
+    nl: { name: "Nederlands", short: "NL", html: "nl",      locale: "nl-NL" }
   };
-  const LANG_ORDER = ["mn", "en", "ko", "zh"];
-  // Korean and Chinese typefaces load only when needed.
+  const LANG_ORDER = ["mn", "en", "ko", "zh", "ja", "fr", "ru", "es", "pt", "de", "nl"];
+  // Languages written without spaces between words.
+  const NO_SPACE = ["zh", "ja"];
+  // Korean, Chinese and Japanese typefaces load only when needed.
   const FONT_CSS = {
     ko: "https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500&family=Noto+Sans+KR:wght@400;500&display=swap",
-    zh: "https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500&family=Noto+Sans+SC:wght@400;500&display=swap"
+    zh: "https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500&family=Noto+Sans+SC:wght@400;500&display=swap",
+    ja: "https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;500&family=Noto+Sans+JP:wght@400;500&display=swap"
   };
 
   const store = {
@@ -227,7 +237,7 @@
 
   /* ---------- Views ---------- */
   const viewHome = () => {
-    loadFont("ko"); loadFont("zh"); // the language list in the hero shows every script
+    loadFont("ko"); loadFont("zh"); loadFont("ja"); // the language list in the hero shows every script
     const others = LANG_ORDER.filter((c) => c !== lang);
     const latest = byDate(POSTS).slice(0, 6);
 
@@ -279,7 +289,7 @@
               <li class="anim" style="--d:${360 + i * 90}">
                 <button type="button" data-set-lang="${c}" lang="${LANGS[c].html}">
                   <span class="motto-lang">${LANGS[c].name}</span>
-                  <span class="motto-text">${esc(plain(t("hero.title", {}, c).replace(/<br\s*\/?>/gi, c === "zh" ? "" : " ")))}</span>
+                  <span class="motto-text">${esc(plain(t("hero.title", {}, c).replace(/<br\s*\/?>/gi, NO_SPACE.includes(c) ? "" : " ")))}</span>
                 </button>
               </li>`).join("")}
           </ul>
@@ -619,7 +629,7 @@
 
   const viewAbout = () => {
     const values = [1, 2, 3].map((n) => ({ t: t(`about.v${n}t`), d: t(`about.v${n}d`) }));
-    loadFont("ko"); loadFont("zh");
+    loadFont("ko"); loadFont("zh"); loadFont("ja");
     return {
       html: `
         <section class="about">

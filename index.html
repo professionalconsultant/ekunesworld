@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>EkunesWorld — Ekunes Journal</title>
-  <meta name="description" content="Ekunes Journal by Enerel Ekune: stories, articles, style and interviews in Mongolian, English, Korean and Chinese.">
+  <meta name="description" content="Ekunes Journal by Enerel Ekune: stories, articles, style and interviews in eleven languages.">
   <meta name="theme-color" content="#ECE8E0" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#101828" media="(prefers-color-scheme: dark)">
 
@@ -26,7 +26,7 @@
       try {
         var th = localStorage.getItem("ekunes-theme");
         if (th) document.documentElement.setAttribute("data-theme", th);
-        var map = { mn: "mn", en: "en", ko: "ko", zh: "zh-Hans" };
+        var map = { mn: "mn", en: "en", ko: "ko", zh: "zh-Hans", ja: "ja", fr: "fr", ru: "ru", es: "es", pt: "pt", de: "de", nl: "nl" };
         var l = localStorage.getItem("ekunes-lang");
         if (l && map[l]) document.documentElement.lang = map[l];
       } catch (e) {}
@@ -41,7 +41,7 @@
   <header class="masthead">
     <p class="masthead-date" id="today"></p>
     <a class="wordmark" href="#" aria-label="EkunesWorld">
-      <span class="wm">EKUNES</span><span class="wm-sub">World</span>
+      <span class="wm">EKUNES WORLD</span><span class="wm-sub">International Interview & Culture</span>
     </a>
     <div class="masthead-social social" data-social></div>
   </header>
@@ -117,6 +117,7 @@
   </noscript>
 
   <script src="assets/js/content.js"></script>
+  <script src="assets/js/translations.js"></script>
   <script src="assets/js/i18n.js"></script>
   <script src="assets/js/main.js"></script>
 </body>

@@ -3,8 +3,8 @@
 
    Palette: undyed cashmere, felt, Tengri (the eternal blue sky)
    navy and camel. Type: the Noto serif family, chosen because it
-   draws Latin, Cyrillic, Korean and Chinese in one voice, so the
-   journal looks the same in all four languages.
+   draws Latin, Cyrillic, Korean, Chinese and Japanese in one voice, so the
+   journal looks the same in all eleven languages.
 
    1 Tokens · 2 Base · 3 Header & menu · 4 Shared pieces
    5 Home · 6 Lists & articles · 7 Collaborate & About
@@ -98,8 +98,15 @@ html[lang="zh-Hans"] {
   --f-sans: "Noto Sans SC", "Noto Sans CJK SC", "PingFang SC", "Microsoft YaHei", sans-serif;
   --ds: .74; --dsb: .9; --lh: 1.9; --prose-lh: 2; --nav-track: .08em;
 }
+html[lang="ja"] {
+  --f-display: "Noto Serif JP", "Noto Serif CJK JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --f-text: "Noto Serif JP", "Noto Serif CJK JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --f-sans: "Noto Sans JP", "Noto Sans CJK JP", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
+  --ds: .74; --dsb: .9; --lh: 1.9; --prose-lh: 2; --nav-track: .06em;
+  line-break: strict;
+}
 /* CJK has no true italics — keep it upright rather than slanted. */
-html[lang="ko"], html[lang="zh-Hans"] { font-synthesis: none; }
+html[lang="ko"], html[lang="zh-Hans"], html[lang="ja"] { font-synthesis: none; }
 
 /* 2. BASE -------------------------------------------------------- */
 *, *::before, *::after { box-sizing: border-box; }
@@ -409,7 +416,7 @@ main:focus { outline: none; }
   letter-spacing: -.025em;
   margin: 0 0 clamp(28px, 3vw, 40px);
 }
-html[lang="ko"] .hero-title, html[lang="zh-Hans"] .hero-title { letter-spacing: 0; line-height: 1.12; }
+html[lang="ko"] .hero-title, html[lang="zh-Hans"] .hero-title, html[lang="ja"] .hero-title { letter-spacing: 0; line-height: 1.12; }
 .hero-lead {
   font-family: var(--f-text);
   font-size: calc(clamp(18px, 1.5vw, 21px) * var(--dsb));
@@ -437,7 +444,9 @@ html[lang="ko"] .hero-title, html[lang="zh-Hans"] .hero-title { letter-spacing: 
 }
 .motto [lang="ko"] .motto-text { font-family: "Noto Serif KR", "Noto Serif CJK KR", "AppleMyungjo", serif; font-size: clamp(17px, 1.5vw, 20px); }
 .motto [lang="zh-Hans"] .motto-text { font-family: "Noto Serif SC", "Noto Serif CJK SC", "Songti SC", serif; font-size: clamp(17px, 1.5vw, 20px); }
+.motto [lang="ja"] .motto-text { font-family: "Noto Serif JP", "Noto Serif CJK JP", "Hiragino Mincho ProN", serif; font-size: clamp(17px, 1.5vw, 20px); }
 .motto [lang="ko"] .motto-lang { font-family: "Noto Sans KR", var(--f-sans); }
+.motto [lang="ja"] .motto-lang { font-family: "Noto Sans JP", var(--f-sans); }
 .motto [lang="zh-Hans"] .motto-lang { font-family: "Noto Sans SC", var(--f-sans); }
 .motto button:hover .motto-text { color: var(--ink); transform: translateX(6px); }
 .motto button:hover .motto-lang { color: var(--accent); }
@@ -611,7 +620,7 @@ blockquote.instagram-media {
   margin: 0 0 24px;
   max-width: 14em;
 }
-html[lang="ko"] .page-title, html[lang="zh-Hans"] .page-title { letter-spacing: 0; line-height: 1.15; }
+html[lang="ko"] .page-title, html[lang="zh-Hans"] .page-title, html[lang="ja"] .page-title { letter-spacing: 0; line-height: 1.15; }
 .page-tagline {
   font-family: var(--f-text); font-style: italic;
   font-size: calc(clamp(20px, 2vw, 25px) * var(--dsb));
@@ -667,7 +676,7 @@ html[lang="ko"] .page-title, html[lang="zh-Hans"] .page-title { letter-spacing: 
   margin: 0 0 28px;
   max-width: 15em;
 }
-html[lang="ko"] .article-title, html[lang="zh-Hans"] .article-title { letter-spacing: 0; line-height: 1.18; }
+html[lang="ko"] .article-title, html[lang="zh-Hans"] .article-title, html[lang="ja"] .article-title { letter-spacing: 0; line-height: 1.18; }
 .article-lede {
   margin: 0; max-width: 36em;
   font-family: var(--f-text); font-style: italic;
@@ -768,6 +777,8 @@ html[lang="ko"] .article-title, html[lang="zh-Hans"] .article-title { letter-spa
 .langs [lang="mn"], .langs [lang="en"] { font-family: "Noto Serif Display", "Noto Serif", serif; }
 .langs [lang="ko"] { font-family: "Noto Serif KR", "Noto Serif CJK KR", serif; }
 .langs [lang="zh-Hans"] { font-family: "Noto Serif SC", "Noto Serif CJK SC", serif; }
+.langs [lang="ja"] { font-family: "Noto Serif JP", "Noto Serif CJK JP", serif; }
+.langs [lang="fr"], .langs [lang="ru"], .langs [lang="es"], .langs [lang="pt"], .langs [lang="de"], .langs [lang="nl"] { font-family: "Noto Serif Display", "Noto Serif", serif; }
 .langs button:hover { color: var(--ink); }
 .langs button[aria-current="true"] { color: var(--accent); }
 
@@ -796,6 +807,7 @@ html[lang="ko"] .article-title, html[lang="zh-Hans"] .article-title { letter-spa
 .footer li a:hover, .footer li button:hover { color: var(--accent); }
 .foot-langs [lang="ko"] { font-family: "Noto Sans KR", var(--f-sans); }
 .foot-langs [lang="zh-Hans"] { font-family: "Noto Sans SC", var(--f-sans); }
+.foot-langs [lang="ja"] { font-family: "Noto Sans JP", var(--f-sans); }
 .foot-langs button[aria-current="true"] { color: var(--accent); }
 .footer-bottom {
   max-width: var(--max); margin: 0 auto;
