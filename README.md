@@ -114,3 +114,16 @@ Every new commit to GitHub redeploys the site automatically.
 To show a picture when the site is shared on social media, add
 `assets/images/share.jpg` (1200×630) and uncomment the `og:image`
 line in `index.html`, replacing `YOUR-DOMAIN` with your address.
+
+## Admin panel (publish posts without editing code)
+
+`admin.html` lets one signed-in person add, edit and delete posts (Stories, Articles, Style, Interviews).
+Posts are stored in Supabase; the site reads them when it loads.
+
+1. Create a free project at supabase.com.
+2. SQL Editor → paste `supabase-setup.sql` → Run.
+3. Authentication → Users → Add user (your email + a strong password). Then Authentication → Sign In / Providers → turn OFF "Allow new users to sign up". Optionally enable 2FA.
+4. Project Settings → API Keys: copy the Project URL and the **publishable** key (`sb_publishable_…`) into `assets/js/config.js`. Never use a secret / `service_role` key.
+5. Open `/admin.html` on your site and sign in.
+
+The publishable key is safe to publish: the database rules let the public only read posts, and only the logged-in user write.

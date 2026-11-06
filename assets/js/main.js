@@ -1003,4 +1003,23 @@
   $$("[data-social]").forEach((el) => { el.innerHTML = socialLinks(); });
   setLang(lang, true);
   route();
+
+  /* ---------- Posts added through the admin panel (Supabase) ---------- */
+  const DB = window.EKUNES_DB || {};
+  if (DB.url && DB.publishableKey) {
+    fetch(`${DB.url}/rest/v1/posts?select=*&order=date.desc`, { headers: { apikey: DB.publishableKey } })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((rows) => {
+        const known = new Set(POSTS.map((p) => p.slug));
+        const fresh = rows.filter((r) => !known.has(r.slug)).map((r) => {
+          const p = { slug: r.slug, section: r.section, sub: r.sub, date: r.date, read: r.read, title: r.title, excerpt: r.excerpt || {}, body: r.body || {} };
+          ["format", "image", "video"].forEach((k) => { if (r[k]) p[k] = r[k]; });
+          return p;
+        });
+        if (!fresh.length) return;
+        POSTS.push(...fresh);
+        route({ keepScroll: true });
+      })
+      .catch(() => { /* offline: the built-in posts still show */ });
+  }
 })();

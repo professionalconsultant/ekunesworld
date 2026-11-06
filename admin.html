@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Admin — Ekunes Journal</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <style>
+    :root { --bg:#ECE8E0; --card:#F6F3EC; --ink:#172036; --muted:#5d6478; --line:#d4cdbf; --accent:#9C7645; --err:#a33; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#101828; --card:#1A2640; --ink:#ECE6DA; --muted:#a3abbd; --line:#2d3a57; --accent:#C9A06A; --err:#f08080; } }
+    * { box-sizing: border-box; }
+    body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
+    main { max-width: 760px; margin: 0 auto; padding: 32px 16px 80px; }
+    h1 { font-family: Georgia, serif; font-weight: 500; font-size: 30px; margin: 0 0 4px; }
+    h2 { font-size: 18px; margin: 32px 0 12px; }
+    .sub { color: var(--muted); margin: 0 0 24px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 20px; }
+    label { display:block; font-size:14px; color:var(--muted); margin: 14px 0 4px; }
+    input, select, textarea { width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--ink); font:inherit; }
+    textarea { min-height: 200px; resize: vertical; }
+    textarea.short { min-height: 70px; }
+    .row { display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 560px) { .row { grid-template-columns: 1fr; } }
+    button { font:inherit; cursor:pointer; border-radius:8px; padding:10px 18px; border:1px solid var(--ink); background:var(--ink); color:var(--bg); }
+    button.ghost { background:transparent; color:var(--ink); border-color:var(--line); }
+    button.danger { background:transparent; color:var(--err); border-color:var(--err); }
+    .tabs { display:flex; flex-wrap:wrap; gap:6px; margin-top: 18px; }
+    .tabs button { padding:6px 12px; font-size:14px; }
+    .tabs button.on { background:var(--accent); border-color:var(--accent); color:#fff; }
+    .tabs button.has::after { content:" ●"; font-size:9px; }
+    .bar { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+    .msg { margin: 12px 0 0; min-height: 1.4em; font-size: 14px; } .msg.err { color: var(--err); }
+    ul.posts { list-style:none; padding:0; margin:0; }
+    ul.posts li { display:flex; justify-content:space-between; gap:12px; align-items:center; padding:12px 0; border-bottom:1px solid var(--line); }
+    ul.posts small { color:var(--muted); display:block; }
+    .hint { font-size:13px; color:var(--muted); margin:4px 0 0; }
+    [hidden] { display:none !important; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Ekunes Journal admin</h1>
+  <p class="sub" id="who">Sign in to publish posts.</p>
+
+  <!-- Sign in -->
+  <section class="card" id="login" hidden>
+    <form id="loginForm">
+      <label for="em">Email</label><input id="em" type="email" autocomplete="username" required>
+      <label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password" required>
+      <p><button type="submit">Sign in</button></p>
+      <p class="msg" id="loginMsg" role="status"></p>
+    </form>
+  </section>
+
+  <!-- Editor -->
+  <section id="editor" hidden>
+    <div class="bar"><strong id="editTitle">New post</strong>
+      <span><a href="index.html" style="color:var(--accent)">View site</a> · <button class="ghost" id="logout" type="button">Sign out</button></span></div>
+    <form class="card" id="postForm" style="margin-top:12px">
+      <div class="row">
+        <div><label for="section">Type</label><select id="section"></select></div>
+        <div><label for="sub">Category</label><select id="sub"></select></div>
+      </div>
+      <div class="row">
+        <div><label for="date">Date</label><input id="date" type="date" required></div>
+        <div><label for="format">Format</label><select id="format"><option value="">Prose</option><option value="poem">Poem (keep line breaks)</option></select></div>
+      </div>
+      <div class="row">
+        <div><label for="video">YouTube video ID (optional)</label><input id="video" placeholder="e.g. z5CgJC4j5T8"></div>
+        <div><label for="img">Cover image (optional)</label><input id="img" type="file" accept="image/*"></div>
+      </div>
+      <p class="hint" id="imgNote"></p>
+
+      <div class="tabs" id="langTabs"></div>
+      <label for="title">Title <span id="langName"></span></label><input id="title">
+      <label for="excerpt">Short summary</label><textarea id="excerpt" class="short"></textarea>
+      <label for="body">Text — separate paragraphs with a blank line</label><textarea id="body"></textarea>
+      <p><button type="button" class="ghost" id="trBtn">Translate English into the other languages</button></p>
+      <label for="trMail">Your email (optional, raises the free daily limit from about 5,000 to 50,000 characters)</label>
+      <input id="trMail" type="email" autocomplete="email">
+      <p class="hint" id="trNote">Automatic translation is a rough draft. Fills only empty language tabs; check each one before publishing.</p>
+      <p class="hint">English is required. Other languages are optional; readers see English where one is missing.</p>
+
+      <p><button type="submit" id="saveBtn">Publish</button>
+         <button type="button" class="ghost" id="newBtn">Start new</button></p>
+      <p class="msg" id="msg" role="status"></p>
+    </form>
+
+    <h2>Your posts</h2>
+    <ul class="posts card" id="list"></ul>
+  </section>
+</main>
+
+<script src="assets/js/content.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const DB = window.EKUNES_DB || {};
+  if (!DB.url || !DB.publishableKey) {
+    $("who").textContent = "Not set up yet: add your Supabase URL and key in assets/js/config.js.";
+    return;
+  }
+  const sb = window.supabase.createClient(DB.url, DB.publishableKey);
+  const LANGS = [["en","English"],["mn","Монгол"],["ko","한국어"],["zh","中文"],["ja","日本語"],["fr","Français"],["ru","Русский"],["es","Español"],["pt","Português"],["de","Deutsch"],["nl","Nederlands"]];
+  // Stories, Articles, Style, Interviews. (Styling and Collaboration are pages, not post types.)
+  const SECTIONS = window.EKUNES.sections.filter((s) => !["collaborate"].includes(s.id));
+  const tx = (v) => (v && (v.en || "")) || "";
+
+  let cur = "en", editingId = null, editingSlug = null, imageUrl = "", mem = {};
+  const blank = () => { mem = {}; LANGS.forEach(([c]) => { mem[c] = { title: "", excerpt: "", body: "" }; }); };
+  blank();
+
+  const say = (t, err) => { $("msg").textContent = t; $("msg").className = "msg" + (err ? " err" : ""); };
+
+  /* --- form plumbing --- */
+  SECTIONS.forEach((s) => $("section").add(new Option(tx(s.title), s.id)));
+  const fillSubs = (selected) => {
+    const s = SECTIONS.find((x) => x.id === $("section").value);
+    $("sub").length = 0;
+    s.subs.forEach((x) => $("sub").add(new Option(tx(x.name), x.id)));
+    if (selected) $("sub").value = selected;
+  };
+  $("section").addEventListener("change", () => fillSubs());
+
+  const stash = () => { mem[cur] = { title: $("title").value, excerpt: $("excerpt").value, body: $("body").value }; };
+  const show = () => {
+    $("title").value = mem[cur].title; $("excerpt").value = mem[cur].excerpt; $("body").value = mem[cur].body;
+    $("langName").textContent = "(" + LANGS.find((l) => l[0] === cur)[1] + ")";
+    $("langTabs").querySelectorAll("button").forEach((b) => {
+      b.classList.toggle("on", b.dataset.c === cur);
+      b.classList.toggle("has", !!(mem[b.dataset.c].title || mem[b.dataset.c].body));
+    });
+  };
+  LANGS.forEach(([c, n]) => {
+    const b = document.createElement("button"); b.type = "button"; b.className = "ghost"; b.textContent = n; b.dataset.c = c;
+    b.onclick = () => { stash(); cur = c; show(); };
+    $("langTabs").appendChild(b);
+  });
+
+  const reset = () => {
+    blank(); cur = "en"; editingId = editingSlug = null; imageUrl = "";
+    $("postForm").reset(); $("date").value = new Date().toISOString().slice(0, 10);
+    $("section").value = SECTIONS[0].id; fillSubs();
+    $("editTitle").textContent = "New post"; $("saveBtn").textContent = "Publish"; $("imgNote").textContent = ""; show();
+  };
+
+  /* --- auth --- */
+  const route = (session) => {
+    $("login").hidden = !!session; $("editor").hidden = !session;
+    $("who").textContent = session ? "Signed in as " + session.user.email : "Sign in to publish posts.";
+    if (session) { reset(); loadList(); }
+  };
+  sb.auth.getSession().then(({ data }) => route(data.session));
+  $("loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const { data, error } = await sb.auth.signInWithPassword({ email: $("em").value.trim(), password: $("pw").value });
+    if (error) { $("loginMsg").textContent = "Wrong email or password."; $("loginMsg").className = "msg err"; return; }
+    $("pw").value = ""; route(data.session);
+  });
+  $("logout").onclick = async () => { await sb.auth.signOut(); route(null); };
+
+  /* --- list --- */
+  async function loadList() {
+    const { data, error } = await sb.from("posts").select("id,slug,section,date,title").order("date", { ascending: false });
+    const ul = $("list"); ul.innerHTML = "";
+    if (error) { ul.textContent = "Could not load posts."; return; }
+    if (!data.length) { ul.innerHTML = "<li>No posts yet. Publish your first one above.</li>"; return; }
+    data.forEach((p) => {
+      const li = document.createElement("li");
+      li.innerHTML = '<span></span><span><button class="ghost" data-a="edit">Edit</button> <button class="danger" data-a="del">Delete</button></span>';
+      li.firstChild.innerHTML = "<strong></strong><small></small>";
+      li.querySelector("strong").textContent = tx(p.title);
+      li.querySelector("small").textContent = p.section + " · " + p.date;
+      li.querySelector("[data-a=edit]").onclick = () => edit(p.id);
+      li.querySelector("[data-a=del]").onclick = async () => {
+        if (!confirm("Delete “" + tx(p.title) + "”? This cannot be undone.")) return;
+        const r = await sb.from("posts").delete().eq("id", p.id);
+        say(r.error ? "Delete failed." : "Deleted.", !!r.error); loadList();
+      };
+      ul.appendChild(li);
+    });
+  }
+  async function edit(id) {
+    const { data: p, error } = await sb.from("posts").select("*").eq("id", id).single();
+    if (error) return say("Could not open that post.", true);
+    reset(); editingId = p.id; editingSlug = p.slug; imageUrl = p.image || "";
+    LANGS.forEach(([c]) => { mem[c] = { title: (p.title || {})[c] || "", excerpt: (p.excerpt || {})[c] || "", body: ((p.body || {})[c] || []).join("\n\n") }; });
+    $("section").value = p.section; fillSubs(p.sub); $("date").value = p.date; $("format").value = p.format || ""; $("video").value = p.video || "";
+    $("imgNote").textContent = imageUrl ? "Current image kept unless you choose a new file." : "";
+    $("editTitle").textContent = "Editing post"; $("saveBtn").textContent = "Save changes"; show(); scrollTo(0, 0);
+  }
+  $("newBtn").onclick = reset;
+
+  /* --- automatic translation (MyMemory, free, no key) --- */
+  const MM = { zh: "zh-CN" };
+  try { $("trMail").value = localStorage.getItem("ekunes-trmail") || ""; } catch (e) {}
+  // MyMemory accepts about 500 characters per request, so text is cut at sentence ends.
+  const chunks = (text) => {
+    const out = []; let cur = "";
+    (text.match(/[^.!?。！？\n]+[.!?。！？]*\s*/g) || [text]).forEach((p) => {
+      if ((cur + p).length > 420 && cur) { out.push(cur); cur = ""; }
+      while (p.length > 420) { out.push(p.slice(0, 420)); p = p.slice(420); }
+      cur += p;
+    });
+    if (cur.trim()) out.push(cur);
+    return out;
+  };
+  let quotaHit = false;
+  async function mm(text, code) {
+    if (!text.trim()) return text;
+    const mail = $("trMail").value.trim();
+    const url = "https://api.mymemory.translated.net/get?q=" + encodeURIComponent(text) + "&langpair=en|" + (MM[code] || code) + (mail ? "&de=" + encodeURIComponent(mail) : "");
+    const r = await fetch(url); const j = await r.json();
+    const out = (j.responseData || {}).translatedText || "";
+    if (j.responseStatus == 429 || /MYMEMORY WARNING/i.test(out)) { quotaHit = true; throw new Error("quota"); }
+    if (j.responseStatus != 200) throw new Error(j.responseDetails || "failed");
+    return out;
+  }
+  // Keeps line breaks and blank lines; translates line by line (poems) or sentence chunks (prose).
+  async function mmBlock(text, code) {
+    const lines = text.split("\n"); const res = [];
+    for (const line of lines) {
+      if (!line.trim()) { res.push(""); continue; }
+      const parts = []; for (const c of chunks(line)) parts.push((await mm(c, code)).trim());
+      res.push(parts.join(" "));
+    }
+    return res.join("\n");
+  }
+  $("trBtn").onclick = async () => {
+    stash();
+    const en = mem.en;
+    if (!en.title.trim() && !en.body.trim()) return say("Write the English version first.", true);
+    try { localStorage.setItem("ekunes-trmail", $("trMail").value.trim()); } catch (e) {}
+    const targets = LANGS.map((l) => l[0]).filter((c) => c !== "en" && !(mem[c].title || mem[c].excerpt || mem[c].body).trim());
+    if (!targets.length) return say("The other language tabs already have text. Clear one to translate it again.", true);
+    quotaHit = false; $("trBtn").disabled = true; let done = 0, failed = [];
+    say("Translating… 0 of " + targets.length + " languages");
+    await Promise.all(targets.map(async (c) => {
+      try {
+        const t = await mmBlock(en.title, c), x = await mmBlock(en.excerpt, c), b = await mmBlock(en.body, c);
+        mem[c] = { title: t, excerpt: x, body: b };
+      } catch (err) { failed.push(c); }
+      say("Translating… " + (++done) + " of " + targets.length + " languages");
+    }));
+    $("trBtn").disabled = false; show();
+    if (quotaHit) say("Today’s free limit was reached" + (done - failed.length ? " (" + (done - failed.length) + " languages done)" : "") + ". Add your email above to raise it, or try again tomorrow.", true);
+    else if (failed.length) say("Done, but these failed: " + failed.join(", ") + ". Try again.", true);
+    else say("Translated. Open each language tab to review before you publish.");
+  };
+
+  /* --- save --- */
+  const slugify = (s) => s.toLowerCase().normalize("NFKD").replace(/[^\w\s-]/g, "").trim().replace(/[\s_]+/g, "-").replace(/-+/g, "-").slice(0, 60);
+  $("postForm").addEventListener("submit", async (e) => {
+    e.preventDefault(); stash();
+    if (!mem.en.title.trim() || !mem.en.body.trim()) return say("Please add an English title and text.", true);
+    $("saveBtn").disabled = true; say("Saving…");
+    try {
+      const file = $("img").files[0];
+      if (file) {
+        const path = Date.now() + "-" + file.name.replace(/[^\w.-]/g, "_");
+        const up = await sb.storage.from("post-images").upload(path, file);
+        if (up.error) throw up.error;
+        imageUrl = sb.storage.from("post-images").getPublicUrl(path).data.publicUrl;
+      }
+      const title = {}, excerpt = {}, body = {};
+      LANGS.forEach(([c]) => {
+        const m = mem[c];
+        if (m.title.trim()) title[c] = m.title.trim();
+        if (m.excerpt.trim()) excerpt[c] = m.excerpt.trim();
+        const paras = m.body.split(/\n\s*\n/).map((x) => x.trim()).filter(Boolean);
+        if (paras.length) body[c] = paras;
+      });
+      const words = mem.en.body.split(/\s+/).length;
+      const row = {
+        section: $("section").value, sub: $("sub").value, date: $("date").value,
+        read: Math.max(1, Math.round(words / 200)), format: $("format").value || null,
+        video: $("video").value.trim() || null, image: imageUrl || null, title, excerpt, body
+      };
+      let r;
+      if (editingId) r = await sb.from("posts").update(row).eq("id", editingId);
+      else r = await sb.from("posts").insert({ ...row, slug: (slugify(mem.en.title) || "post") + "-" + Math.random().toString(36).slice(2, 6) });
+      if (r.error) throw r.error;
+      say("Published. It is live on the site now."); reset(); loadList();
+    } catch (err) { say("Could not save: " + (err.message || err), true); }
+    $("saveBtn").disabled = false;
+  });
+})();
+</script>
+</body>
+</html>
