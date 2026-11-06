@@ -159,7 +159,7 @@ window.EKUNES = {
       ]
     },
     {
-      id: "collaborate", num: "5", tone: "sky", image: "https://i.ytimg.com/vi/XXYljlc7V-I/oardefault.jpg", imagePosition: "50% 12%",
+      id: "collaborate", num: "5", tone: "sky", image: "https://i.ytimg.com/vi/x7gzwKBWv6w/oardefault.jpg", imagePosition: "50% 30%",
       title:   { en: "Collaboration", mn: "Хамтын ажил", ko: "협업", zh: "合作" },
       tagline: { en: "Let’s create something meaningful", mn: "Утга учиртай зүйлийг хамтдаа бүтээе", ko: "의미 있는 것을 함께 만들어요", zh: "一起创造有意义的事物" },
       intro:   { en: "Brand partnerships, editorial features and creative campaigns.",

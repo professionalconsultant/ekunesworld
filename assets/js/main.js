@@ -351,44 +351,27 @@
           </div>
           <ul class="band-list">${services}</ul>
         </div>
-      </section>
-
-      <section class="letter" aria-labelledby="letter-title">
-        <div class="wrap letter-grid">
-          <div>
-            <h2 class="h2" id="letter-title">${t("news.title")}</h2>
-            <p class="letter-text">${t("news.text")}</p>
-          </div>
-          <div>
-            <form class="letter-form" id="newsForm" novalidate>
-              <input type="text" name="_honey" class="visually-hidden" tabindex="-1" autocomplete="off" aria-hidden="true">
-              <label class="visually-hidden" for="newsEmail">${t("news.placeholder")}</label>
-              <input id="newsEmail" name="email" type="email" autocomplete="email" placeholder="${esc(t("news.placeholder"))}" required>
-              <button type="submit">${t("news.button")}</button>
-            </form>
-            <p class="form-status" id="newsStatus" role="status" aria-live="polite"></p>
-          </div>
-        </div>
       </section>`,
       title: "",
-      nav: ""
+      nav: "home",
+      key: "home"
     };
   };
 
   const viewSection = (s, subId) => {
     const sub = subOf(s, subId);
-    const all = POSTS.filter((p) => p.section === s.id);
-    const list = byDate(all.filter((p) => !sub || p.sub === sub.id));
-    const i = SECTIONS.indexOf(s);
-    const next = SECTIONS[(i + 1) % SECTIONS.length];
+    const all = byDate(POSTS.filter((p) => p.section === s.id));
+    const list = sub ? all.filter((p) => p.sub === sub.id) : all;
+    const idx = contentSections().indexOf(s);
+    const next = contentSections()[(idx + 1) % contentSections().length];
     const items = [{ id: "", label: t("section.all"), href: `#${s.id}`, count: all.length },
       ...s.subs.map((x) => ({ id: x.id, label: loc(x.name), href: `#${s.id}/${x.id}`, count: all.filter((p) => p.sub === x.id).length }))];
     return {
       html: `
         ${pageHead({
           num: s.num,
-          title: esc(loc(s.title)),
-          tagline: esc(loc(s.tagline)),
+          title: esc(sub ? loc(sub.name) : loc(s.title)),
+          tagline: esc(sub ? loc(s.title) : loc(s.tagline)),
           intro: esc(loc(s.intro)),
           aside: media({ tone: s.tone, text: loc(s.title), image: s.image, pos: s.imagePosition, alt: loc(s.title), cls: "media--portrait" })
         })}
@@ -514,27 +497,13 @@
         </section>
 
         <section class="block" id="proposal" aria-labelledby="proposal-title">
-          <div class="wrap proposal">
+          <div class="wrap proposal" style="grid-template-columns:minmax(0,1fr)">
             <div class="proposal-intro">
               <h2 class="h2" id="proposal-title">${t("form.title")}</h2>
               <p class="lead">${t("form.text")}</p>
               <p class="direct">${t("form.direct")} <a href="mailto:${esc(SITE.email)}">${esc(SITE.email)}</a></p>
               <div class="social">${socialLinks()}</div>
             </div>
-            <form class="form" id="proposalForm" novalidate>
-              <input type="text" name="_honey" class="visually-hidden" tabindex="-1" autocomplete="off" aria-hidden="true">
-              <div class="field-row">
-                <label class="field"><span>${t("form.name")}</span><input name="name" autocomplete="name" required></label>
-                <label class="field"><span>${t("form.email")}</span><input name="email" type="email" autocomplete="email" required></label>
-              </div>
-              <label class="field"><span>${t("form.org")}</span><input name="organisation" autocomplete="organization"></label>
-              <label class="field field--select"><span>${t("form.type")}</span>
-                <select name="type">${services.map((x) => `<option>${x.t}</option>`).join("")}<option>${t("form.other")}</option></select>
-              </label>
-              <label class="field"><span>${t("form.message")}</span><textarea name="message" rows="5" required></textarea></label>
-              <button class="btn" type="submit">${t("form.send")}</button>
-              <p class="form-status" id="proposalStatus" role="status" aria-live="polite"></p>
-            </form>
           </div>
         </section>
         ${nextLink("#about", t("section.next"), t("about.title"))}`,
@@ -569,27 +538,13 @@
           </div>
         </section>
         <section class="block" id="book" aria-labelledby="book-title">
-          <div class="wrap proposal">
+          <div class="wrap proposal" style="grid-template-columns:minmax(0,1fr)">
             <div class="proposal-intro">
               <h2 class="h2" id="book-title">${t("styling.formTitle")}</h2>
               <p class="lead">${t("styling.formText")}</p>
               <p class="direct">${t("form.direct")} <a href="mailto:${esc(SITE.email)}">${esc(SITE.email)}</a></p>
               <div class="social">${socialLinks()}</div>
             </div>
-            <form class="form" id="stylingForm" data-subject="Styling" novalidate>
-              <input type="text" name="_honey" class="visually-hidden" tabindex="-1" autocomplete="off" aria-hidden="true">
-              <div class="field-row">
-                <label class="field"><span>${t("form.name")}</span><input name="name" autocomplete="name" required></label>
-                <label class="field"><span>${t("form.email")}</span><input name="email" type="email" autocomplete="email" required></label>
-              </div>
-              <label class="field"><span>${t("form.org")}</span><input name="organisation" autocomplete="organization"></label>
-              <label class="field field--select"><span>${t("form.type")}</span>
-                <select name="type">${services.map((x) => `<option>${x.t}</option>`).join("")}<option>${t("form.other")}</option></select>
-              </label>
-              <label class="field"><span>${t("form.message")}</span><textarea name="message" rows="5" required></textarea></label>
-              <button class="btn" type="submit">${t("styling.send")}</button>
-              <p class="form-status" role="status" aria-live="polite"></p>
-            </form>
           </div>
         </section>
         ${nextLink("#style", t("section.next"), loc(sectionOf("style").title))}`,
@@ -604,22 +559,12 @@
     html: `
       ${pageHead({ title: t("contact.title"), intro: t("contact.text") })}
       <section class="block" aria-labelledby="contact-title">
-        <div class="wrap proposal">
+        <div class="wrap proposal" style="grid-template-columns:minmax(0,1fr)">
           <div class="proposal-intro">
             <h2 class="h2" id="contact-title">${t("contact.title")}</h2>
             <p class="direct">${t("form.direct")} <a href="mailto:${esc(SITE.email)}">${esc(SITE.email)}</a></p>
             <div class="social">${socialLinks()}</div>
           </div>
-          <form class="form" id="contactForm" data-subject="Message" novalidate>
-            <input type="text" name="_honey" class="visually-hidden" tabindex="-1" autocomplete="off" aria-hidden="true">
-            <div class="field-row">
-              <label class="field"><span>${t("form.name")}</span><input name="name" autocomplete="name" required></label>
-              <label class="field"><span>${t("form.email")}</span><input name="email" type="email" autocomplete="email" required></label>
-            </div>
-            <label class="field"><span>${t("form.message")}</span><textarea name="message" rows="6" required></textarea></label>
-            <button class="btn" type="submit">${t("contact.send")}</button>
-            <p class="form-status" role="status" aria-live="polite"></p>
-          </form>
         </div>
       </section>`,
     title: t("contact.title"),
@@ -948,10 +893,7 @@
   }
 
   function bindPage() {
-    wireForm($("#newsForm", app), onNewsletter);
     wireForm($("#proposalForm", app), onProposal);
-    wireForm($("#stylingForm", app), onProposal);
-    wireForm($("#contactForm", app), onProposal);
   }
 
   let toastTimer;
