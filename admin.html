@@ -197,6 +197,7 @@
   /* --- automatic translation (MyMemory, free, no key) --- */
   const MM = { zh: "zh-CN" };
   try { $("trMail").value = localStorage.getItem("ekunes-trmail") || ""; } catch (e) {}
+  if (!$("trMail").value) $("trMail").value = "ekune.nrl@gmail.com";
   // MyMemory accepts about 500 characters per request, so text is cut at sentence ends.
   const chunks = (text) => {
     const out = []; let cur = "";
@@ -209,8 +210,15 @@
     return out;
   };
   let quotaHit = false;
+  // MyMemory first; once its daily limit is hit, DeepL (via the Supabase function) takes over.
   async function mm(text, code) {
     if (!text.trim()) return text;
+    if (!quotaHit) { try { return await mmApi(text, code); } catch (e) { if (e.message !== "quota") throw e; } }
+    const { data, error } = await sb.functions.invoke("translate", { body: { text, to: code } });
+    if (error || !data || !data.text) throw new Error("deepl");
+    return data.text;
+  }
+  async function mmApi(text, code) {
     const mail = $("trMail").value.trim();
     const url = "https://api.mymemory.translated.net/get?q=" + encodeURIComponent(text) + "&langpair=en|" + (MM[code] || code) + (mail ? "&de=" + encodeURIComponent(mail) : "");
     const r = await fetch(url); const j = await r.json();
@@ -246,7 +254,7 @@
       say("Translating… " + (++done) + " of " + targets.length + " languages");
     }));
     $("trBtn").disabled = false; show();
-    if (quotaHit) say("Today’s free limit was reached" + (done - failed.length ? " (" + (done - failed.length) + " languages done)" : "") + ". Add your email above to raise it, or try again tomorrow.", true);
+    if (failed.length && quotaHit) say("MyMemory’s daily limit was reached and DeepL could not translate: " + failed.join(", ") + ". Try again later.", true);
     else if (failed.length) say("Done, but these failed: " + failed.join(", ") + ". Try again.", true);
     else say("Translated. Open each language tab to review before you publish.");
   };
