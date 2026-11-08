@@ -125,24 +125,6 @@
       ${image ? `<img src="${esc(image)}" alt="${esc(alt)}" ${pos ? `style="object-position:${esc(pos)}"` : ""} loading="lazy" decoding="async" onerror="this.remove()">` : ""}
     </div>`;
 
-  // YouTube: show the cover first and load the player only when someone presses play.
-  const ytThumb = (id, wide) => `https://i.ytimg.com/vi/${id}/${wide ? "sddefault" : "oardefault"}.jpg`;
-  const videoFrame = (id, title, wide = false, poster = "") => `
-    <div class="video-frame${wide ? " video-frame--wide" : ""}">
-      <button class="video-poster" type="button" data-video="${esc(id)}" data-title="${esc(title)}" aria-label="${esc(t("watch.play"))}: ${esc(title)}">
-        <img src="${esc(poster || ytThumb(id, wide))}" alt="" loading="lazy" decoding="async">
-        <span class="video-play">${ICON.play}</span>
-      </button>
-    </div>`;
-  const playVideo = (btn) => {
-    const frame = document.createElement("iframe");
-    frame.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(btn.dataset.video)}?autoplay=1&playsinline=1&rel=0`;
-    frame.title = btn.dataset.title || "YouTube";
-    frame.allow = "autoplay; encrypted-media; picture-in-picture; fullscreen";
-    frame.allowFullscreen = true;
-    btn.replaceWith(frame);
-  };
-
   const socialLinks = () => SITE.social.map((s) =>
     `<a href="${esc(s.url)}" target="_blank" rel="noopener" aria-label="${esc(s.label)}">${ICON[s.icon] || ICON.link}</a>`).join("");
 
@@ -189,52 +171,6 @@
       ${aside ? `<div class="page-head-aside">${aside}</div>` : ""}
     </header>`;
 
-  // Official Instagram embeds. If Instagram is blocked, a plain link to the post shows instead.
-  const instaSection = () => {
-    const posts = SITE.instagramPosts || [];
-    if (!posts.length) return "";
-    const ig = SITE.social.find((s) => s.icon === "instagram");
-    return `
-      <section class="block insta" aria-labelledby="insta-title">
-        <div class="wrap">
-          <div class="block-head">
-            <h2 class="h2" id="insta-title">${t("insta.title")}</h2>
-            ${ig ? `<a class="text-link" href="${esc(ig.url)}" target="_blank" rel="noopener">${t("insta.follow")} ${esc(ig.handle || "")}</a>` : ""}
-          </div>
-          <div class="insta-row">
-            ${posts.map((url) => `
-              <div class="insta-item">
-                <blockquote class="instagram-media" data-instgrm-permalink="${esc(url)}" data-instgrm-version="14">
-                  <a class="text-link" href="${esc(url)}" target="_blank" rel="noopener">${t("insta.view")}</a>
-                </blockquote>
-              </div>`).join("")}
-          </div>
-        </div>
-      </section>`;
-  };
-
-  let igObserver;
-  const loadInstagram = () => {
-    const sec = $(".insta", app);
-    if (!sec) return;
-    const run = () => {
-      if (window.instgrm && window.instgrm.Embeds) { window.instgrm.Embeds.process(); return; }
-      if (document.querySelector("script[data-ig]")) return; // still loading; it processes on load
-      const sc = document.createElement("script");
-      sc.src = "https://www.instagram.com/embed.js";
-      sc.async = true;
-      sc.dataset.ig = "1";
-      document.body.appendChild(sc);
-    };
-    if (!("IntersectionObserver" in window)) { run(); return; }
-    if (igObserver) igObserver.disconnect();
-    // Load Instagram only when the reader gets near the section, to keep the page fast.
-    igObserver = new IntersectionObserver((list) => {
-      if (list.some((x) => x.isIntersecting)) { igObserver.disconnect(); run(); }
-    }, { rootMargin: "600px 0px" });
-    igObserver.observe(sec);
-  };
-
   /* ---------- Views ---------- */
   const viewHome = () => {
     loadFont("ko"); loadFont("zh"); loadFont("ja"); // the language list in the hero shows every script
@@ -265,7 +201,6 @@
       { k: "writer", href: "#stories" },
       { k: "stylist", href: "#styling" }
     ];
-    const yt = SITE.youtube || {};
 
     return {
       html: `
@@ -326,21 +261,6 @@
           ${entries(latest, true)}
         </div>
       </section>
-
-      ${(yt.videos || []).length ? `
-      <section class="block block--tint" aria-labelledby="watch-title">
-        <div class="wrap">
-          <div class="block-head">
-            <h2 class="h2" id="watch-title">${t("watch.title")}</h2>
-            <a class="text-link" href="${esc(yt.channel)}" target="_blank" rel="noopener">${t("watch.more")}</a>
-          </div>
-          <div class="videos">
-            ${yt.videos.map((v) => `<figure class="video">${videoFrame(v.id, loc(v.title))}<figcaption class="video-title">${esc(loc(v.title))}</figcaption></figure>`).join("")}
-          </div>
-        </div>
-      </section>` : ""}
-
-      ${instaSection()}
 
       <section class="band" aria-labelledby="band-title">
         <div class="wrap band-grid">
@@ -431,9 +351,7 @@
             <h1 class="article-title">${esc(loc(p.title))}</h1>
             <p class="article-lede">${esc(loc(p.excerpt))}</p>
           </header>
-          ${p.video
-            ? `<div class="article-video">${videoFrame(p.video, loc(p.title), true, p.image)}</div>`
-            : (p.image ? `<figure class="article-figure"><img src="${esc(p.image)}" alt="${esc(loc(p.title))}" onerror="this.parentNode.remove()"></figure>` : "")}
+          ${p.image ? `<figure class="article-figure"><img src="${esc(p.image)}" alt="${esc(loc(p.title))}" onerror="this.parentNode.remove()"></figure>` : ""}
           <div class="article-body">
             <aside class="article-aside">
               <dl>
@@ -443,8 +361,6 @@
                 <div><dt>${t("article.share")}</dt><dd class="share-row">
                   ${navigator.share ? `<button class="icon-btn" type="button" data-share="native" aria-label="${esc(t("article.share"))}">${ICON.share}</button>` : ""}
                   <button class="icon-btn" type="button" data-share="copy" aria-label="${esc(t("article.copy"))}">${ICON.link}</button>
-                  <button class="icon-btn" type="button" data-share="linkedin" aria-label="LinkedIn">${ICON.linkedin}</button>
-                  <button class="icon-btn" type="button" data-share="facebook" aria-label="Facebook">${ICON.facebook}</button>
                 </dd></div>
               </dl>
             </aside>
@@ -502,7 +418,6 @@
               <h2 class="h2" id="proposal-title">${t("form.title")}</h2>
               <p class="lead">${t("form.text")}</p>
               <p class="direct">${t("form.direct")} <a href="mailto:${esc(SITE.email)}">${esc(SITE.email)}</a></p>
-              <div class="social">${socialLinks()}</div>
             </div>
           </div>
         </section>
@@ -543,7 +458,6 @@
               <h2 class="h2" id="book-title">${t("styling.formTitle")}</h2>
               <p class="lead">${t("styling.formText")}</p>
               <p class="direct">${t("form.direct")} <a href="mailto:${esc(SITE.email)}">${esc(SITE.email)}</a></p>
-              <div class="social">${socialLinks()}</div>
             </div>
           </div>
         </section>
@@ -563,7 +477,8 @@
           <div class="proposal-intro">
             <h2 class="h2" id="contact-title">${t("contact.title")}</h2>
             <p class="direct">${t("form.direct")} <a href="mailto:${esc(SITE.email)}">${esc(SITE.email)}</a></p>
-            <div class="social">${socialLinks()}</div>
+            ${SITE.phone ? `<p class="direct"><a href="tel:${esc(String(SITE.phone).replace(/[^\d+]/g, ""))}">${esc(SITE.phone)}</a></p>` : ""}
+            ${SITE.address ? `<p class="direct">${esc(SITE.address)}</p>` : ""}
           </div>
         </div>
       </section>`,
@@ -618,14 +533,6 @@
           </div>
         </section>
 
-        <section class="block" aria-labelledby="follow-title">
-          <div class="wrap">
-            <h2 class="h2" id="follow-title">${t("about.follow")}</h2>
-            <ul class="follow">
-              ${SITE.social.map((s) => `<li><a href="${esc(s.url)}" target="_blank" rel="noopener">${ICON[s.icon] || ICON.link}<span class="follow-name">${esc(s.label)}</span><span class="follow-handle">${esc(s.handle || "")}</span></a></li>`).join("")}
-            </ul>
-          </div>
-        </section>
         ${nextLink("#stories", t("section.next"), loc(SECTIONS[0].title))}`,
       title: t("about.title"),
       nav: "about",
@@ -685,8 +592,6 @@
     });
     document.body.classList.toggle("is-article", !!view.article);
     closeMenu();
-    bindPage();
-    loadInstagram();
 
     if (!keepPlace) {
       const target = view.anchor && document.getElementById(view.anchor);
@@ -735,26 +640,18 @@
       <li><a href="#contact">${esc(t("footer.write"))}</a></li>`;
   };
 
+  const langSelect = (cls) => `
+    <label class="lang-select ${cls}">
+      <span class="sr-only">${esc(t("ui.language"))}</span>
+      <select data-lang-select aria-label="${esc(t("ui.language"))}">
+        ${LANG_ORDER.map((c) => `<option value="${c}" lang="${LANGS[c].html}" ${c === lang ? "selected" : ""}>${LANGS[c].name}</option>`).join("")}
+      </select>
+    </label>`;
   const renderLangSwitches = () => {
-    $$("[data-lang-switch]").forEach((el) => {
-      el.classList.remove("open");
-      el.innerHTML = `
-        <button class="lang-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="${esc(t("ui.language"))}">${ICON.globe}<span>${LANGS[lang].short}</span></button>
-        <ul class="lang-menu">
-          ${LANG_ORDER.map((c) => `<li><button type="button" data-set-lang="${c}" lang="${LANGS[c].html}" ${c === lang ? 'aria-current="true"' : ""}>${LANGS[c].name}<span>${LANGS[c].short}</span></button></li>`).join("")}
-        </ul>`;
-    });
-    $("#menuLangs").innerHTML = LANG_ORDER.map((c) =>
-      `<button type="button" data-set-lang="${c}" lang="${LANGS[c].html}" ${c === lang ? 'aria-current="true"' : ""}>${LANGS[c].name}</button>`).join("");
-    $("#footLangs").innerHTML = LANG_ORDER.map((c) =>
-      `<li><button type="button" data-set-lang="${c}" lang="${LANGS[c].html}" ${c === lang ? 'aria-current="true"' : ""}>${LANGS[c].name}</button></li>`).join("");
+    $$("[data-lang-switch]").forEach((el) => { el.innerHTML = langSelect("lang-select--nav"); });
+    $("#menuLangs").innerHTML = langSelect("lang-select--block");
+    $("#footLangs").innerHTML = langSelect("lang-select--block");
   };
-
-  const closeLangs = () => $$("[data-lang-switch]").forEach((el) => {
-    el.classList.remove("open");
-    const b = el.querySelector(".lang-btn");
-    if (b) b.setAttribute("aria-expanded", "false");
-  });
 
   const applyStatic = () => {
     root.lang = LANGS[lang].html;
@@ -818,84 +715,7 @@
     $("#menuOpen").setAttribute("aria-expanded", "false");
   }
 
-  /* ---------- Forms & sharing ---------- */
-  const validEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
-  const setStatus = (el, msg, isError = false) => {
-    if (!el) return;
-    el.textContent = msg;
-    el.classList.toggle("is-error", isError);
-  };
-  const postForm = async (url, form, subject) => {
-    const data = new FormData(form);
-    data.append("_subject", subject);
-    data.append("_template", "table");
-    data.append("_captcha", "false");
-    const res = await fetch(url, { method: "POST", body: data, headers: { Accept: "application/json" } });
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    let reply = null;
-    try { reply = await res.json(); } catch (e) { /* some services reply with plain text */ }
-    if (reply && (reply.success === false || reply.success === "false")) throw new Error("rejected");
-  };
-  const failText = () => `${t("form.error")} ${SITE.email}`;
-  const mailto = (subject, body) =>
-    `mailto:${SITE.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-
-  // Opens the visitor's email app. Some embedded previews block this, so the address is also shown in the message.
-  const openMail = (url) => {
-    try {
-      const a = document.createElement("a");
-      a.href = url; a.rel = "noopener"; a.style.display = "none";
-      document.body.appendChild(a); a.click(); a.remove();
-    } catch (e) { /* blocked: the address is shown in the status message */ }
-  };
-
-  async function onNewsletter(form) {
-    const status = $("#newsStatus");
-    const email = form.elements.email.value.trim();
-    if (!validEmail(email)) { setStatus(status, t("news.invalid"), true); form.elements.email.focus(); return; }
-    if (SITE.newsletterEndpoint) {
-      try { await postForm(SITE.newsletterEndpoint, form, `${SITE.journal}: newsletter sign-up`); form.reset(); setStatus(status, t("news.thanks")); }
-      catch (err) { setStatus(status, failText(), true); }
-    } else {
-      openMail(mailto(`${SITE.journal} — newsletter`, `Please add ${email} to The Ekunes Letter.`));
-      setStatus(status, `${t("news.mailto")} ${SITE.email}`);
-    }
-  }
-
-  async function onProposal(form) {
-    const status = form.querySelector(".form-status");
-    const f = form.elements;
-    const val = (n) => (f[n] ? f[n].value.trim() : "");
-    const name = val("name"), email = val("email"), message = val("message"), org = val("organisation"), type = val("type");
-    if (!name || !validEmail(email) || !message) { setStatus(status, t("form.required"), true); return; }
-    const subject = `${form.dataset.subject || "Proposal"}${type ? ": " + type : ""} — ${name}`;
-    if (SITE.formEndpoint) {
-      const btn = form.querySelector("button[type=submit]");
-      btn.disabled = true;
-      try { await postForm(SITE.formEndpoint, form, subject); form.reset(); setStatus(status, t("form.sent")); }
-      catch (err) { setStatus(status, failText(), true); }
-      finally { btn.disabled = false; }
-    } else {
-      const body = `Name: ${name}\nEmail: ${email}${org ? `\nOrganisation: ${org}` : ""}${type ? `\nType: ${type}` : ""}\n\n${message}`;
-      openMail(mailto(subject, body));
-      setStatus(status, `${t("form.mailto")} ${SITE.email}`);
-    }
-  }
-
-  // Forms are handled by script. Embedded previews often block native form submission,
-  // so the button click is handled too (Enter in a field also triggers that click).
-  function wireForm(form, handler) {
-    if (!form) return;
-    const run = (e) => { e.preventDefault(); handler(form); };
-    form.addEventListener("submit", run);
-    const btn = form.querySelector("button[type=submit]");
-    if (btn) btn.addEventListener("click", run);
-  }
-
-  function bindPage() {
-    wireForm($("#proposalForm", app), onProposal);
-  }
-
+  /* ---------- Sharing ---------- */
   let toastTimer;
   const toast = (msg) => {
     const el = $("#toast");
@@ -916,11 +736,6 @@
       catch (e) { try { window.prompt(t("article.copy"), url); } catch (e2) { /* blocked */ } }
       return;
     }
-    const u = encodeURIComponent(url);
-    const target = kind === "linkedin"
-      ? `https://www.linkedin.com/sharing/share-offsite/?url=${u}`
-      : `https://www.facebook.com/sharer/sharer.php?u=${u}`;
-    window.open(target, "_blank", "noopener");
   };
 
   /* ---------- Events ---------- */
@@ -931,23 +746,12 @@
     const link = el.closest("a[href^='#']");
     if (link && !e.defaultPrevented && e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) {
       e.preventDefault();
-      closeLangs();
       goTo(link.getAttribute("href"));
       return;
     }
 
     const setL = el.closest("[data-set-lang]");
     if (setL) { setLang(setL.dataset.setLang); return; }
-
-    const langBtn = el.closest(".lang-btn");
-    if (langBtn) {
-      const wrap = langBtn.parentElement;
-      const willOpen = !wrap.classList.contains("open");
-      closeLangs();
-      if (willOpen) { wrap.classList.add("open"); langBtn.setAttribute("aria-expanded", "true"); }
-      return;
-    }
-    if (!el.closest("[data-lang-switch]")) closeLangs();
 
     if (el.closest("[data-theme-toggle]")) { toggleTheme(); return; }
     if (el.closest("#menuOpen")) { openMenu(); return; }
@@ -963,15 +767,17 @@
     }
     if (el.closest("#menu a")) closeMenu();
 
-    const vid = el.closest("[data-video]");
-    if (vid) { playVideo(vid); return; }
-
     const sh = el.closest("[data-share]");
     if (sh) share(sh.dataset.share);
   });
 
+  document.addEventListener("change", (e) => {
+    const sel = e.target.closest && e.target.closest("[data-lang-select]");
+    if (sel) setLang(sel.value);
+  });
+
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") { closeMenu(); closeLangs(); }
+    if (e.key === "Escape") closeMenu();
   });
 
   const fromAddressBar = () => { current = null; route({ focus: true }); };
@@ -1007,6 +813,33 @@
   /* ---------- Posts added through the admin panel (Supabase) ---------- */
   const DB = window.EKUNES_DB || {};
   if (DB.url && DB.publishableKey) {
+    // Photos and social links edited in the admin panel.
+    fetch(`${DB.url}/rest/v1/site_settings?select=*`, { headers: { apikey: DB.publishableKey } })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((rows) => {
+        const get = (k) => (rows.find((r) => r.key === k) || {}).value;
+        const photos = get("photos"), social = get("social");
+        const contact = get("contact");
+        if (contact) {
+          if (contact.email) {
+            SITE.email = contact.email;
+          }
+          SITE.phone = contact.phone || "";
+          SITE.address = contact.address || "";
+          route({ keepScroll: true });
+        }
+        if (Array.isArray(social)) {
+          SITE.social = social;
+          $$("[data-social]").forEach((el) => { el.innerHTML = socialLinks(); });
+        }
+        if (photos) {
+          ["hero", "about", "styling"].forEach((k) => { if (k in photos) SITE.images[k] = photos[k] || ""; });
+          SECTIONS.forEach((sec) => { if (sec.id in photos) sec.image = photos[sec.id] || ""; });
+          route({ keepScroll: true });
+        }
+      })
+      .catch(() => { /* offline: defaults show */ });
+
     fetch(`${DB.url}/rest/v1/posts?select=*&order=date.desc`, { headers: { apikey: DB.publishableKey } })
       .then((r) => (r.ok ? r.json() : []))
       .then((rows) => {

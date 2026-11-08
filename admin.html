@@ -35,6 +35,16 @@
     ul.posts li { display:flex; justify-content:space-between; gap:12px; align-items:center; padding:12px 0; border-bottom:1px solid var(--line); }
     ul.posts small { color:var(--muted); display:block; }
     .hint { font-size:13px; color:var(--muted); margin:4px 0 0; }
+    .photos { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:14px; }
+    .photo { border:1px solid var(--line); border-radius:8px; padding:10px; background:var(--bg); }
+    .photo .thumb { aspect-ratio:4/3; border-radius:6px; background:var(--card); display:grid; place-items:center; color:var(--muted); font-size:13px; overflow:hidden; }
+    .photo .thumb img { width:100%; height:100%; object-fit:cover; }
+    .photo strong { display:block; font-size:14px; margin:8px 0 6px; }
+    .photo .acts { display:flex; gap:6px; flex-wrap:wrap; }
+    .photo button, .photo label.btn { padding:5px 10px; font-size:13px; }
+    label.btn { display:inline-block; margin:0; cursor:pointer; border-radius:8px; border:1px solid var(--line); color:var(--ink); }
+    .soc { display:grid; grid-template-columns:120px 1fr 1fr 1.4fr auto; gap:8px; margin-bottom:8px; }
+    @media (max-width:640px){ .soc { grid-template-columns:1fr 1fr; } }
     [hidden] { display:none !important; }
   </style>
 </head>
@@ -68,7 +78,7 @@
       </div>
       <div class="row">
         <div><label for="video">YouTube video ID (optional)</label><input id="video" placeholder="e.g. z5CgJC4j5T8"></div>
-        <div><label for="img">Cover image (optional)</label><input id="img" type="file" accept="image/*"></div>
+        <div><label for="img">Cover image (optional)</label><input id="img" type="file" accept="image/*"><button type="button" class="danger" id="imgDel" hidden style="margin-top:6px;padding:4px 10px;font-size:13px">Delete current image</button></div>
       </div>
       <p class="hint" id="imgNote"></p>
 
@@ -89,6 +99,33 @@
 
     <h2>Your posts</h2>
     <ul class="posts card" id="list"></ul>
+
+    <h2>Photos</h2>
+    <div class="card">
+      <p class="hint" style="margin-top:0">Upload a photo for each place on the site, or delete it to go back to the coloured block.</p>
+      <div class="photos" id="photos"></div>
+      <p class="msg" id="photoMsg" role="status"></p>
+    </div>
+
+    <h2>Social media links</h2>
+    <form class="card" id="socialForm">
+      <p class="hint" style="margin-top:0">Shown in the website footer only.</p>
+      <div id="socRows"></div>
+      <p><button type="button" class="ghost" id="socAdd">Add link</button> <button type="submit">Save links</button></p>
+      <p class="msg" id="socMsg" role="status"></p>
+    </form>
+
+    <h2>Contact details</h2>
+    <form class="card" id="contactForm">
+      <label for="cEmail">Email</label><input id="cEmail" type="email" required>
+      <p class="hint">Shown on the contact page. Visitors write to this address by email.</p>
+      <div class="row">
+        <div><label for="cPhone">Phone (optional)</label><input id="cPhone" type="tel"></div>
+        <div><label for="cAddr">Address or city (optional)</label><input id="cAddr"></div>
+      </div>
+      <p><button type="submit">Save contact details</button></p>
+      <p class="msg" id="cMsg" role="status"></p>
+    </form>
   </section>
 </main>
 
@@ -109,7 +146,7 @@
   const SECTIONS = window.EKUNES.sections.filter((s) => !["collaborate"].includes(s.id));
   const tx = (v) => (v && (v.en || "")) || "";
 
-  let cur = "en", editingId = null, editingSlug = null, imageUrl = "", mem = {};
+  let cur = "en", editingId = null, editingSlug = null, imageUrl = "", oldImage = "", mem = {};
   const blank = () => { mem = {}; LANGS.forEach(([c]) => { mem[c] = { title: "", excerpt: "", body: "" }; }); };
   blank();
 
@@ -141,17 +178,17 @@
   });
 
   const reset = () => {
-    blank(); cur = "en"; editingId = editingSlug = null; imageUrl = "";
+    blank(); cur = "en"; editingId = editingSlug = null; imageUrl = ""; oldImage = "";
     $("postForm").reset(); $("date").value = new Date().toISOString().slice(0, 10);
     $("section").value = SECTIONS[0].id; fillSubs();
-    $("editTitle").textContent = "New post"; $("saveBtn").textContent = "Publish"; $("imgNote").textContent = ""; show();
+    $("imgDel").hidden = true; $("editTitle").textContent = "New post"; $("saveBtn").textContent = "Publish"; $("imgNote").textContent = ""; show();
   };
 
   /* --- auth --- */
   const route = (session) => {
     $("login").hidden = !!session; $("editor").hidden = !session;
     $("who").textContent = session ? "Signed in as " + session.user.email : "Sign in to publish posts.";
-    if (session) { reset(); loadList(); }
+    if (session) { reset(); loadList(); loadSettings(); }
   };
   sb.auth.getSession().then(({ data }) => route(data.session));
   $("loginForm").addEventListener("submit", async (e) => {
@@ -190,9 +227,14 @@
     LANGS.forEach(([c]) => { mem[c] = { title: (p.title || {})[c] || "", excerpt: (p.excerpt || {})[c] || "", body: ((p.body || {})[c] || []).join("\n\n") }; });
     $("section").value = p.section; fillSubs(p.sub); $("date").value = p.date; $("format").value = p.format || ""; $("video").value = p.video || "";
     $("imgNote").textContent = imageUrl ? "Current image kept unless you choose a new file." : "";
+    $("imgDel").hidden = !imageUrl;
     $("editTitle").textContent = "Editing post"; $("saveBtn").textContent = "Save changes"; show(); scrollTo(0, 0);
   }
   $("newBtn").onclick = reset;
+  $("imgDel").onclick = () => {
+    if (!confirm("Delete this cover image? It is removed when you press Save changes.")) return;
+    oldImage = imageUrl; imageUrl = ""; $("imgDel").hidden = true; $("imgNote").textContent = "Image will be deleted when you save.";
+  };
 
   /* --- automatic translation (MyMemory, free, no key) --- */
   const MM = { zh: "zh-CN" };
@@ -259,6 +301,96 @@
     else say("Translated. Open each language tab to review before you publish.");
   };
 
+  /* --- site settings: photos, social links, contact --- */
+  const SLOTS = [["hero","Home page portrait"],["about","About page portrait"],["styling","Styling page photo"],
+    ...window.EKUNES.sections.map((x) => [x.id, "Section: " + tx(x.title)])];
+  let settings = {};
+  const saveSetting = (key, value) => sb.from("site_settings").upsert({ key, value });
+  const flash = (id, t, err) => { $(id).textContent = t; $(id).className = "msg" + (err ? " err" : ""); };
+  const storagePath = (url) => { const m = String(url).match(/\/post-images\/(.+)$/); return m ? decodeURIComponent(m[1]) : null; };
+
+  async function loadSettings() {
+    const { data } = await sb.from("site_settings").select("*");
+    settings = {}; (data || []).forEach((r) => { settings[r.key] = r.value; });
+    renderPhotos(); renderSocial();
+    const c = settings.contact || {};
+    $("cEmail").value = c.email || window.EKUNES.site.email || "";
+    $("cPhone").value = c.phone || ""; $("cAddr").value = c.address || "";
+  }
+
+  function renderPhotos() {
+    const photos = settings.photos || {}, box = $("photos"); box.innerHTML = "";
+    SLOTS.forEach(([id, label]) => {
+      const url = photos[id], d = document.createElement("div"); d.className = "photo";
+      d.innerHTML = '<div class="thumb"></div><strong></strong><div class="acts"><label class="btn">' + (url ? "Replace" : "Upload") +
+        '<input type="file" accept="image/*" hidden></label></div>';
+      d.querySelector("strong").textContent = label;
+      const th = d.querySelector(".thumb");
+      if (url) { const im = document.createElement("img"); im.src = url; im.alt = ""; th.appendChild(im); } else th.textContent = "No photo";
+      d.querySelector("input").onchange = (e) => uploadPhoto(id, e.target.files[0]);
+      if (url) {
+        const b = document.createElement("button"); b.type = "button"; b.className = "danger"; b.textContent = "Delete";
+        b.onclick = () => deletePhoto(id); d.querySelector(".acts").appendChild(b);
+      }
+      box.appendChild(d);
+    });
+  }
+  async function uploadPhoto(id, file) {
+    if (!file) return;
+    flash("photoMsg", "Uploading…");
+    const path = "site-" + id + "-" + Date.now() + "-" + file.name.replace(/[^\w.-]/g, "_");
+    const up = await sb.storage.from("post-images").upload(path, file);
+    if (up.error) return flash("photoMsg", "Upload failed: " + up.error.message, true);
+    const old = (settings.photos || {})[id];
+    const photos = { ...(settings.photos || {}), [id]: sb.storage.from("post-images").getPublicUrl(path).data.publicUrl };
+    const r = await saveSetting("photos", photos);
+    if (r.error) return flash("photoMsg", "Could not save: " + r.error.message, true);
+    if (old && storagePath(old)) await sb.storage.from("post-images").remove([storagePath(old)]);
+    settings.photos = photos; renderPhotos(); flash("photoMsg", "Photo updated. It is live on the site now.");
+  }
+  async function deletePhoto(id) {
+    if (!confirm("Delete this photo from the site?")) return;
+    const photos = { ...(settings.photos || {}) }, old = photos[id]; delete photos[id]; photos[id] = "";
+    const r = await saveSetting("photos", photos);
+    if (r.error) return flash("photoMsg", "Could not delete: " + r.error.message, true);
+    if (old && storagePath(old)) await sb.storage.from("post-images").remove([storagePath(old)]);
+    settings.photos = photos; renderPhotos(); flash("photoMsg", "Photo deleted.");
+  }
+
+  const ICONS = [["instagram","Instagram"],["linkedin","LinkedIn"],["facebook","Facebook"],["youtube","YouTube"],["link","Other"]];
+  function socRow(v = {}) {
+    const d = document.createElement("div"); d.className = "soc";
+    d.innerHTML = '<select data-k="icon"></select><input data-k="label" placeholder="Name"><input data-k="handle" placeholder="@handle"><input data-k="url" type="url" placeholder="https://…"><button type="button" class="danger">Remove</button>';
+    ICONS.forEach(([c, n]) => d.querySelector("select").add(new Option(n, c)));
+    d.querySelector("select").value = v.icon || "link";
+    ["label", "handle", "url"].forEach((k) => { d.querySelector('[data-k=' + k + ']').value = v[k] || ""; });
+    d.querySelector("button").onclick = () => d.remove();
+    return d;
+  }
+  function renderSocial() {
+    const list = Array.isArray(settings.social) ? settings.social : window.EKUNES.site.social;
+    $("socRows").innerHTML = ""; list.forEach((v) => $("socRows").appendChild(socRow(v)));
+  }
+  $("socAdd").onclick = () => $("socRows").appendChild(socRow());
+  $("socialForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const list = [...$("socRows").children].map((d) => {
+      const g = (k) => d.querySelector("[data-k=" + k + "]").value.trim();
+      return { icon: g("icon"), label: g("label") || g("icon"), handle: g("handle"), url: g("url") };
+    }).filter((x) => /^https?:\/\//.test(x.url));
+    const r = await saveSetting("social", list);
+    if (r.error) return flash("socMsg", "Could not save: " + r.error.message, true);
+    settings.social = list; flash("socMsg", "Saved. The footer is updated.");
+  });
+
+  $("contactForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const v = { email: $("cEmail").value.trim(), phone: $("cPhone").value.trim(), address: $("cAddr").value.trim() };
+    const r = await saveSetting("contact", v);
+    if (r.error) return flash("cMsg", "Could not save: " + r.error.message, true);
+    settings.contact = v; flash("cMsg", "Saved. The contact page uses the new details.");
+  });
+
   /* --- save --- */
   const slugify = (s) => s.toLowerCase().normalize("NFKD").replace(/[^\w\s-]/g, "").trim().replace(/[\s_]+/g, "-").replace(/-+/g, "-").slice(0, 60);
   $("postForm").addEventListener("submit", async (e) => {
@@ -291,6 +423,7 @@
       if (editingId) r = await sb.from("posts").update(row).eq("id", editingId);
       else r = await sb.from("posts").insert({ ...row, slug: (slugify(mem.en.title) || "post") + "-" + Math.random().toString(36).slice(2, 6) });
       if (r.error) throw r.error;
+      if (oldImage && storagePath(oldImage)) await sb.storage.from("post-images").remove([storagePath(oldImage)]);
       say("Published. It is live on the site now."); reset(); loadList();
     } catch (err) { say("Could not save: " + (err.message || err), true); }
     $("saveBtn").disabled = false;

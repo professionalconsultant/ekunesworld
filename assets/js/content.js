@@ -19,19 +19,11 @@ window.EKUNES = {
     journal: "Ekunes Journal",
     author: "Enerel Ekune",
 
-    // ← Replace with your real email address. Forms open an email to this address.
+    // ← Replace with your real email address. Shown on the contact page.
     email: "ekune.nrl@gmail.com",
 
     // Your website address once it is live, e.g. "https://ekunesworld.com/". Used by the share buttons.
     url: "",
-
-    // Where the forms send messages. FormSubmit delivers them straight to the email above,
-    // so visitors do not need an email app. The FIRST message sent after publishing makes FormSubmit
-    // email you an activation link: click it once and every later message arrives normally.
-    // To use another service (e.g. Formspree), paste its address here. Leave empty ("") to fall back
-    // to opening the visitor's email app.
-    formEndpoint: "https://formsubmit.co/ajax/ekune.nrl@gmail.com",
-    newsletterEndpoint: "https://formsubmit.co/ajax/ekune.nrl@gmail.com",
 
     // "" = choose automatically from the visitor's browser language. Or set "mn", "en", "ko" or "zh".
     defaultLang: "",
@@ -40,9 +32,9 @@ window.EKUNES = {
     // For the best quality, replace them with your own files, e.g. "assets/images/hero.jpg".
     // ...Position moves the crop: "50% 0%" = top, "50% 50%" = centre.
     images: {
-      hero: "https://i.ytimg.com/vi/GVfRMgf_F0A/oardefault.jpg",        heroPosition: "50% 28%",
-      about: "https://i.ytimg.com/vi/x7gzwKBWv6w/oardefault.jpg",       aboutPosition: "50% 30%",
-      styling: "https://i.ytimg.com/vi/wPrhq7mUUYc/oardefault.jpg",     stylingPosition: "50% 6%"
+      hero: "",        heroPosition: "50% 28%",
+      about: "",       aboutPosition: "50% 30%",
+      styling: "",     stylingPosition: "50% 6%"
     },
 
     // Her own words (from the pinned Facebook post). Mongolian and English are hers;
@@ -97,7 +89,7 @@ window.EKUNES = {
      image = optional photo path, e.g. "assets/images/stories.jpg"            */
   sections: [
     {
-      id: "stories", num: "1", tone: "oat", image: "https://i.ytimg.com/vi/ZP4OhevzGfQ/oardefault.jpg", imagePosition: "50% 22%",
+      id: "stories", num: "1", tone: "oat", image: "", imagePosition: "50% 22%",
       title:   { en: "Stories & Literature", mn: "Өгүүллэг ба уран зохиол", ko: "스토리 & 문학", zh: "故事与文学" },
       tagline: { en: "Original stories and creative writing", mn: "Анхдагч өгүүллэг ба бүтээлч зохиол", ko: "오리지널 스토리와 창작 글", zh: "原创故事与创意写作" },
       intro:   { en: "Short fiction, poetry and literary collections — including Mongolian literature in English translation.",
@@ -112,7 +104,7 @@ window.EKUNES = {
       ]
     },
     {
-      id: "articles", num: "2", tone: "felt", image: "https://i.ytimg.com/vi/8s0NjwZ3HFo/oardefault.jpg", imagePosition: "50% 0%",
+      id: "articles", num: "2", tone: "felt", image: "", imagePosition: "50% 0%",
       title:   { en: "Articles & Journalism", mn: "Нийтлэл ба сэтгүүл зүй", ko: "아티클 & 저널리즘", zh: "文章与新闻写作" },
       tagline: { en: "Perspectives that matter", mn: "Чухал үзэл бодлууд", ko: "중요한 관점들", zh: "值得关注的视角" },
       intro:   { en: "Essays and reporting on culture, business, psychology and the creative industries.",
@@ -128,7 +120,7 @@ window.EKUNES = {
       ]
     },
     {
-      id: "style", num: "3", tone: "camel", image: "https://i.ytimg.com/vi/o-y86qGcIho/oardefault.jpg", imagePosition: "50% 30%",
+      id: "style", num: "3", tone: "camel", image: "", imagePosition: "50% 30%",
       title:   { en: "Style & Fashion", mn: "Стиль ба загвар", ko: "스타일 & 패션", zh: "风格与时尚" },
       tagline: { en: "Personal style. Visual identity.", mn: "Хувийн стиль. Дүр төрх.", ko: "퍼스널 스타일. 비주얼 아이덴티티.", zh: "个人风格，视觉身份。" },
       intro:   { en: "Notes from a working stylist: fashion, personal styling and colour psychology — and the designers and brands shaping a new aesthetic.",
@@ -144,7 +136,7 @@ window.EKUNES = {
       ]
     },
     {
-      id: "interviews", num: "4", tone: "tengri", image: "https://i.ytimg.com/vi/Ymj2UqD70xY/oardefault.jpg", imagePosition: "50% 22%",
+      id: "interviews", num: "4", tone: "tengri", image: "", imagePosition: "50% 22%",
       title:   { en: "Interviews", mn: "Ярилцлага", ko: "인터뷰", zh: "访谈" },
       tagline: { en: "The people behind the creativity", mn: "Бүтээлч байдлын ард буй хүмүүс", ko: "창의성 뒤의 사람들", zh: "创造力背后的人" },
       intro:   { en: "Conversations with artists, international professionals and entrepreneurs — about their work and their inner worlds.",
@@ -159,7 +151,7 @@ window.EKUNES = {
       ]
     },
     {
-      id: "collaborate", num: "5", tone: "sky", image: "https://i.ytimg.com/vi/x7gzwKBWv6w/oardefault.jpg", imagePosition: "50% 30%",
+      id: "collaborate", num: "5", tone: "sky", image: "", imagePosition: "50% 30%",
       title:   { en: "Collaboration", mn: "Хамтын ажил", ko: "협업", zh: "合作" },
       tagline: { en: "Let’s create something meaningful", mn: "Утга учиртай зүйлийг хамтдаа бүтээе", ko: "의미 있는 것을 함께 만들어요", zh: "一起创造有意义的事物" },
       intro:   { en: "Brand partnerships, editorial features and creative campaigns.",
@@ -209,7 +201,7 @@ window.EKUNES = {
     },
     {
       slug: "naadam-and-forum", section: "articles", sub: "culture", date: "2026-06-10", read: 6,
-      video: "z5CgJC4j5T8", image: "https://i.ytimg.com/vi/z5CgJC4j5T8/sddefault.jpg",
+      video: "z5CgJC4j5T8", image: "",
       title:   { en: "Two Days at Naadam and the Forum", mn: "Наадам ба форумын хоёр өдөр", ko: "나담과 포럼에서의 이틀", zh: "那达慕与论坛的两天" },
       excerpt: { en: "Video coverage from the Mongolian Naadam and Forum, filmed over two days.",
                  mn: "Монголын Наадам ба Форумаас хоёр өдрийн турш хийсэн видео сурвалжлага.",

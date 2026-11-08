@@ -62,21 +62,10 @@ Copy one post block in `content.js` and change it:
 If a language is missing, English is shown instead. For poems add `format: "poem"`
 and use `\n` for line breaks.
 
-## How the forms deliver messages
+## Contact
 
-All forms (Write to us, Submit a proposal, Book a styling session, newsletter) send to
-`ekune.nrl@gmail.com` through FormSubmit (https://formsubmit.co), a free service. Visitors do not
-need an email app, and the page shows a clear message if sending fails.
-
-**One-time activation (important):** after the site is live, send ONE test message yourself from the
-"Write to us" page. FormSubmit emails an activation link to ekune.nrl@gmail.com. Click it once.
-After that, every message arrives in your inbox. If your test message does not arrive, send it again
-after activating. Check the spam folder for the activation email.
-
-Visitors' name, email and message pass through FormSubmit on the way to your inbox.
-To use a different service (for example Formspree), put its address in `formEndpoint` and
-`newsletterEndpoint` in `content.js`. If you leave both empty (`""`), the forms open the
-visitor's own email app instead.
+The site has no forms. Visitors write to the email address shown on the contact page
+(`email` in `content.js`, or edited in the admin panel under Contact details).
 
 ## Languages
 
