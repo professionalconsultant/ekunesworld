@@ -333,6 +333,19 @@
     };
   };
 
+  // Videos attached to a post: YouTube links and uploaded files. The older single "video" id still works.
+  const videoBlocks = (p) => {
+    const list = (p.videos || []).map((v) => (v.t === "yt" ? { yt: v.id } : { url: v.url }));
+    if (p.video && !list.some((v) => v.yt === p.video)) list.unshift({ yt: p.video });
+    return list.map((v) => v.yt
+      ? `<div class="article-video-item"><iframe src="https://www.youtube-nocookie.com/embed/${esc(v.yt)}" title="${esc(loc(p.title))}" loading="lazy" allow="accelerometer; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>`
+      : `<div class="article-video-item"><video src="${esc(v.url)}" controls preload="metadata" playsinline></video></div>`).join("");
+  };
+  const galleryBlocks = (p) => (p.gallery || []).map((u) =>
+    `<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" alt="" loading="lazy" onerror="this.parentNode.remove()"></a>`).join("");
+  // The admin's sign-in is stored in this browser; only then is the Edit link shown.
+  const isAdmin = () => { try { return Object.keys(localStorage).some((k) => /^sb-.+-auth-token$/.test(k)); } catch (e) { return false; } };
+
   const viewArticle = (p) => {
     const s = sectionOf(p.section);
     const sub = subOf(s, p.sub);
@@ -352,12 +365,14 @@
             <p class="article-lede">${esc(loc(p.excerpt))}</p>
           </header>
           ${p.image ? `<figure class="article-figure"><img src="${esc(p.image)}" alt="${esc(loc(p.title))}" onerror="this.parentNode.remove()"></figure>` : ""}
+          ${videoBlocks(p) ? `<div class="article-videos">${videoBlocks(p)}</div>` : ""}
           <div class="article-body">
             <aside class="article-aside">
               <dl>
                 <div><dt>${t("article.byLabel")}</dt><dd>${esc(SITE.author)}</dd></div>
                 <div><dt>${t("article.dateLabel")}</dt><dd><time datetime="${esc(p.date)}">${fmtDate(p.date)}</time></dd></div>
                 <div><dt>${t("article.readLabel")}</dt><dd>${esc(t("card.min", { n: p.read }))}</dd></div>
+                ${isAdmin() ? `<div><dt>Admin</dt><dd><a class="text-link" href="admin.html#edit/${esc(encodeURIComponent(p.slug))}">Edit this article</a></dd></div>` : ""}
                 <div><dt>${t("article.share")}</dt><dd class="share-row">
                   ${navigator.share ? `<button class="icon-btn" type="button" data-share="native" aria-label="${esc(t("article.share"))}">${ICON.share}</button>` : ""}
                   <button class="icon-btn" type="button" data-share="copy" aria-label="${esc(t("article.copy"))}">${ICON.link}</button>
@@ -369,6 +384,7 @@
               ${p.link ? `<p class="prose-link"><a class="btn" href="${esc(p.link.url)}" target="_blank" rel="noopener">${esc(loc(p.link.label))}</a></p>` : ""}
             </div>
           </div>
+          ${galleryBlocks(p) ? `<div class="article-gallery">${galleryBlocks(p)}</div>` : ""}
         </article>
         <section class="block block--tint" aria-labelledby="related-title">
           <div class="wrap">
@@ -843,14 +859,16 @@
     fetch(`${DB.url}/rest/v1/posts?select=*&order=date.desc`, { headers: { apikey: DB.publishableKey } })
       .then((r) => (r.ok ? r.json() : []))
       .then((rows) => {
-        const known = new Set(POSTS.map((p) => p.slug));
-        const fresh = rows.filter((r) => !known.has(r.slug)).map((r) => {
+        // A saved post with the same slug as a built-in one is an edited copy and replaces it.
+        let changed = false;
+        rows.forEach((r) => {
           const p = { slug: r.slug, section: r.section, sub: r.sub, date: r.date, read: r.read, title: r.title, excerpt: r.excerpt || {}, body: r.body || {} };
-          ["format", "image", "video"].forEach((k) => { if (r[k]) p[k] = r[k]; });
-          return p;
+          ["format", "image", "video", "link", "gallery", "videos"].forEach((k) => { if (r[k] && !(Array.isArray(r[k]) && !r[k].length)) p[k] = r[k]; });
+          const i = POSTS.findIndex((x) => x.slug === r.slug);
+          if (i >= 0) POSTS[i] = p; else POSTS.push(p);
+          changed = true;
         });
-        if (!fresh.length) return;
-        POSTS.push(...fresh);
+        if (!changed) return;
         route({ keepScroll: true });
       })
       .catch(() => { /* offline: the built-in posts still show */ });

@@ -45,6 +45,15 @@
     label.btn { display:inline-block; margin:0; cursor:pointer; border-radius:8px; border:1px solid var(--line); color:var(--ink); }
     .soc { display:grid; grid-template-columns:120px 1fr 1fr 1.4fr auto; gap:8px; margin-bottom:8px; }
     @media (max-width:640px){ .soc { grid-template-columns:1fr 1fr; } }
+    .mlist { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:10px; margin-top:8px; }
+    .mlist:empty { display:none; }
+    .mitem { border:1px solid var(--line); border-radius:8px; padding:6px; background:var(--bg); font-size:12px; }
+    .mitem .mthumb { aspect-ratio:4/3; border-radius:5px; overflow:hidden; background:var(--card); }
+    .mitem .mthumb img, .mitem .mthumb video { width:100%; height:100%; object-fit:cover; display:block; }
+    .mitem .macts { display:flex; gap:4px; margin-top:6px; }
+    .mitem button { padding:3px 8px; font-size:12px; }
+    .tag { font-size:11px; color:var(--muted); border:1px solid var(--line); border-radius:99px; padding:1px 8px; margin-left:6px; }
+    .yt { display:flex; gap:8px; margin-top:8px; } .yt input { flex:1; }
     [hidden] { display:none !important; }
   </style>
 </head>
@@ -76,11 +85,19 @@
         <div><label for="date">Date</label><input id="date" type="date" required></div>
         <div><label for="format">Format</label><select id="format"><option value="">Prose</option><option value="poem">Poem (keep line breaks)</option></select></div>
       </div>
-      <div class="row">
-        <div><label for="video">YouTube video ID (optional)</label><input id="video" placeholder="e.g. z5CgJC4j5T8"></div>
-        <div><label for="img">Cover image (optional)</label><input id="img" type="file" accept="image/*"><button type="button" class="danger" id="imgDel" hidden style="margin-top:6px;padding:4px 10px;font-size:13px">Delete current image</button></div>
-      </div>
+      <label for="img">Cover image (optional)</label>
+      <input id="img" type="file" accept="image/*"><button type="button" class="danger" id="imgDel" hidden style="margin-top:6px;padding:4px 10px;font-size:13px">Delete current image</button>
       <p class="hint" id="imgNote"></p>
+
+      <label for="gal">More photos (optional, up to <span id="maxPhotos"></span>) — shown as a gallery under the text</label>
+      <input id="gal" type="file" accept="image/*" multiple>
+      <div class="mlist" id="galList"></div>
+
+      <label for="vid">Videos (optional, up to <span id="maxVideos"></span>) — upload files (<span id="maxMb"></span> MB each) and/or add YouTube links</label>
+      <input id="vid" type="file" accept="video/*" multiple>
+      <div class="yt"><input id="yt" placeholder="YouTube link or video ID"><button type="button" class="ghost" id="ytAdd">Add link</button></div>
+      <div class="mlist" id="vidList"></div>
+      <p class="hint">New files are uploaded when you press Publish / Save changes.</p>
 
       <div class="tabs" id="langTabs"></div>
       <label for="title">Title <span id="langName"></span></label><input id="title">
@@ -146,7 +163,10 @@
   const SECTIONS = window.EKUNES.sections.filter((s) => !["collaborate"].includes(s.id));
   const tx = (v) => (v && (v.en || "")) || "";
 
+  const MAX_PHOTOS = 20, MAX_VIDEOS = 10, MAX_VIDEO_MB = 50;
+  $("maxPhotos").textContent = MAX_PHOTOS; $("maxVideos").textContent = MAX_VIDEOS; $("maxMb").textContent = MAX_VIDEO_MB;
   let cur = "en", editingId = null, editingSlug = null, imageUrl = "", oldImage = "", mem = {};
+  let gallery = [], videos = [], removedMedia = [], curLink = null;
   const blank = () => { mem = {}; LANGS.forEach(([c]) => { mem[c] = { title: "", excerpt: "", body: "" }; }); };
   blank();
 
@@ -178,7 +198,7 @@
   });
 
   const reset = () => {
-    blank(); cur = "en"; editingId = editingSlug = null; imageUrl = ""; oldImage = "";
+    blank(); cur = "en"; editingId = editingSlug = null; imageUrl = ""; oldImage = ""; gallery = []; videos = []; removedMedia = []; curLink = null; renderMedia();
     $("postForm").reset(); $("date").value = new Date().toISOString().slice(0, 10);
     $("section").value = SECTIONS[0].id; fillSubs();
     $("imgDel").hidden = true; $("editTitle").textContent = "New post"; $("saveBtn").textContent = "Publish"; $("imgNote").textContent = ""; show();
@@ -188,7 +208,11 @@
   const route = (session) => {
     $("login").hidden = !!session; $("editor").hidden = !session;
     $("who").textContent = session ? "Signed in as " + session.user.email : "Sign in to publish posts.";
-    if (session) { reset(); loadList(); loadSettings(); }
+    if (session) {
+      reset(); loadList(); loadSettings();
+      const m = location.hash.match(/^#edit\/(.+)$/);
+      if (m) openBySlug(decodeURIComponent(m[1]));
+    }
   };
   sb.auth.getSession().then(({ data }) => route(data.session));
   $("loginForm").addEventListener("submit", async (e) => {
@@ -200,36 +224,110 @@
   $("logout").onclick = async () => { await sb.auth.signOut(); route(null); };
 
   /* --- list --- */
+  // Posts saved in the database, plus the built-in ones from content.js that have not been edited yet.
+  const BUILTIN = window.EKUNES.posts || [];
   async function loadList() {
     const { data, error } = await sb.from("posts").select("id,slug,section,date,title").order("date", { ascending: false });
     const ul = $("list"); ul.innerHTML = "";
     if (error) { ul.textContent = "Could not load posts."; return; }
-    if (!data.length) { ul.innerHTML = "<li>No posts yet. Publish your first one above.</li>"; return; }
-    data.forEach((p) => {
+    const saved = new Set(data.map((p) => p.slug)), original = new Set(BUILTIN.map((p) => p.slug));
+    const rows = [...data, ...BUILTIN.filter((p) => !saved.has(p.slug)).map((p) => ({ builtin: true, slug: p.slug, section: p.section, date: p.date, title: p.title }))]
+      .sort((a, b) => (a.date < b.date ? 1 : -1));
+    if (!rows.length) { ul.innerHTML = "<li>No posts yet. Publish your first one above.</li>"; return; }
+    rows.forEach((p) => {
       const li = document.createElement("li");
-      li.innerHTML = '<span></span><span><button class="ghost" data-a="edit">Edit</button> <button class="danger" data-a="del">Delete</button></span>';
-      li.firstChild.innerHTML = "<strong></strong><small></small>";
+      li.innerHTML = '<span><strong></strong><small></small></span><span><button class="ghost" data-a="edit">Edit</button> <button class="danger" data-a="del">Delete</button></span>';
       li.querySelector("strong").textContent = tx(p.title);
-      li.querySelector("small").textContent = p.section + " · " + p.date;
-      li.querySelector("[data-a=edit]").onclick = () => edit(p.id);
-      li.querySelector("[data-a=del]").onclick = async () => {
-        if (!confirm("Delete “" + tx(p.title) + "”? This cannot be undone.")) return;
-        const r = await sb.from("posts").delete().eq("id", p.id);
-        say(r.error ? "Delete failed." : "Deleted.", !!r.error); loadList();
-      };
+      li.querySelector("small").textContent = p.section + " · " + p.date + (p.builtin ? " · built-in" : original.has(p.slug) ? " · edited" : "");
+      li.querySelector("[data-a=edit]").onclick = () => (p.builtin ? loadPost(BUILTIN.find((x) => x.slug === p.slug), null) : edit(p.id));
+      const del = li.querySelector("[data-a=del]");
+      if (p.builtin) del.remove();
+      else {
+        if (original.has(p.slug)) del.textContent = "Revert to original";
+        del.onclick = async () => {
+          const msg = original.has(p.slug) ? "Throw away your edits to “" + tx(p.title) + "” and restore the original text?" : "Delete “" + tx(p.title) + "”? This cannot be undone.";
+          if (!confirm(msg)) return;
+          const r = await sb.from("posts").delete().eq("id", p.id);
+          say(r.error ? "Delete failed." : "Done.", !!r.error); loadList();
+        };
+      }
       ul.appendChild(li);
     });
   }
   async function edit(id) {
     const { data: p, error } = await sb.from("posts").select("*").eq("id", id).single();
     if (error) return say("Could not open that post.", true);
-    reset(); editingId = p.id; editingSlug = p.slug; imageUrl = p.image || "";
+    loadPost(p, p.id);
+  }
+  async function openBySlug(slug) {
+    const { data: p } = await sb.from("posts").select("*").eq("slug", slug).maybeSingle();
+    if (p) return loadPost(p, p.id);
+    const b = BUILTIN.find((x) => x.slug === slug);
+    if (b) loadPost(b, null); else say("Could not find that post.", true);
+  }
+  // id = database row id, or null for a built-in post (saving then stores an edited copy under the same address).
+  function loadPost(p, id) {
+    reset(); editingId = id; editingSlug = p.slug; imageUrl = p.image || ""; curLink = p.link || null;
     LANGS.forEach(([c]) => { mem[c] = { title: (p.title || {})[c] || "", excerpt: (p.excerpt || {})[c] || "", body: ((p.body || {})[c] || []).join("\n\n") }; });
-    $("section").value = p.section; fillSubs(p.sub); $("date").value = p.date; $("format").value = p.format || ""; $("video").value = p.video || "";
+    gallery = (p.gallery || []).map((url) => ({ url }));
+    videos = (p.videos || []).map((v) => (v.t === "yt" ? { yt: v.id } : { url: v.url }));
+    if (p.video && !videos.some((v) => v.yt === p.video)) videos.unshift({ yt: p.video });
+    renderMedia();
+    $("section").value = p.section; fillSubs(p.sub); $("date").value = p.date; $("format").value = p.format || "";
     $("imgNote").textContent = imageUrl ? "Current image kept unless you choose a new file." : "";
     $("imgDel").hidden = !imageUrl;
     $("editTitle").textContent = "Editing post"; $("saveBtn").textContent = "Save changes"; show(); scrollTo(0, 0);
   }
+
+  /* --- photos and videos attached to a post --- */
+  const ytId = (s) => { s = s.trim(); const m = s.match(/(?:v=|youtu\.be\/|shorts\/|embed\/)([\w-]{11})/); return m ? m[1] : /^[\w-]{11}$/.test(s) ? s : ""; };
+  function mediaList(box, items, isVideo) {
+    box.innerHTML = "";
+    items.forEach((it, i) => {
+      const d = document.createElement("div"); d.className = "mitem";
+      d.innerHTML = '<div class="mthumb"></div><div class="macts"><button type="button" class="ghost" data-a="up" title="Move earlier">←</button><button type="button" class="danger" data-a="rm">Remove</button></div>';
+      const th = d.querySelector(".mthumb"), src = it.preview || it.url;
+      if (it.yt) { const im = document.createElement("img"); im.src = "https://img.youtube.com/vi/" + it.yt + "/mqdefault.jpg"; im.alt = "YouTube"; th.appendChild(im); }
+      else if (isVideo) { const v = document.createElement("video"); v.src = src; v.preload = "metadata"; v.muted = true; th.appendChild(v); }
+      else { const im = document.createElement("img"); im.src = src; im.alt = ""; th.appendChild(im); }
+      d.querySelector("[data-a=up]").hidden = i === 0;
+      d.querySelector("[data-a=up]").onclick = () => { items.splice(i - 1, 0, items.splice(i, 1)[0]); renderMedia(); };
+      d.querySelector("[data-a=rm]").onclick = () => {
+        const [gone] = items.splice(i, 1);
+        if (gone.url) removedMedia.push(gone.url); if (gone.preview) URL.revokeObjectURL(gone.preview);
+        renderMedia();
+      };
+      box.appendChild(d);
+    });
+  }
+  function renderMedia() { mediaList($("galList"), gallery, false); mediaList($("vidList"), videos, true); }
+  $("gal").onchange = (e) => {
+    for (const f of e.target.files) {
+      if (gallery.length >= MAX_PHOTOS) { say("You can add up to " + MAX_PHOTOS + " photos per post.", true); break; }
+      gallery.push({ file: f, preview: URL.createObjectURL(f) });
+    }
+    e.target.value = ""; renderMedia();
+  };
+  $("vid").onchange = (e) => {
+    for (const f of e.target.files) {
+      if (videos.length >= MAX_VIDEOS) { say("You can add up to " + MAX_VIDEOS + " videos per post.", true); break; }
+      if (f.size > MAX_VIDEO_MB * 1048576) { say("“" + f.name + "” is over " + MAX_VIDEO_MB + " MB. Upload it to YouTube and add the link instead.", true); continue; }
+      videos.push({ file: f, preview: URL.createObjectURL(f) });
+    }
+    e.target.value = ""; renderMedia();
+  };
+  $("ytAdd").onclick = () => {
+    const id = ytId($("yt").value);
+    if (!id) return say("That does not look like a YouTube link or video ID.", true);
+    if (videos.length >= MAX_VIDEOS) return say("You can add up to " + MAX_VIDEOS + " videos per post.", true);
+    videos.push({ yt: id }); $("yt").value = ""; renderMedia();
+  };
+  const uploadMedia = async (f, tag) => {
+    const path = Date.now() + "-" + tag + "-" + f.name.replace(/[^\w.-]/g, "_");
+    const up = await sb.storage.from("post-images").upload(path, f);
+    if (up.error) throw new Error(f.name + ": " + up.error.message);
+    return sb.storage.from("post-images").getPublicUrl(path).data.publicUrl;
+  };
   $("newBtn").onclick = reset;
   $("imgDel").onclick = () => {
     if (!confirm("Delete this cover image? It is removed when you press Save changes.")) return;
@@ -403,7 +501,16 @@
         const path = Date.now() + "-" + file.name.replace(/[^\w.-]/g, "_");
         const up = await sb.storage.from("post-images").upload(path, file);
         if (up.error) throw up.error;
-        imageUrl = sb.storage.from("post-images").getPublicUrl(path).data.publicUrl;
+        if (imageUrl && !oldImage) oldImage = imageUrl; // replaced cover is deleted from storage after the save
+        imageUrl =sb.storage.from("post-images").getPublicUrl(path).data.publicUrl;
+      }
+      let n = 0; const total = gallery.filter((g) => g.file).length + videos.filter((v) => v.file).length;
+      for (const [list, tag] of [[gallery, "p"], [videos, "v"]]) {
+        for (const it of list) {
+          if (!it.file) continue;
+          say("Uploading file " + (++n) + " of " + total + "…");
+          it.url = await uploadMedia(it.file, tag + n); URL.revokeObjectURL(it.preview); delete it.file; delete it.preview;
+        }
       }
       const title = {}, excerpt = {}, body = {};
       LANGS.forEach(([c]) => {
@@ -417,13 +524,16 @@
       const row = {
         section: $("section").value, sub: $("sub").value, date: $("date").value,
         read: Math.max(1, Math.round(words / 200)), format: $("format").value || null,
-        video: $("video").value.trim() || null, image: imageUrl || null, title, excerpt, body
+        video: null, image: imageUrl || null, title, excerpt, body, link: curLink,
+        gallery: gallery.map((g) => g.url),
+        videos: videos.map((v) => (v.yt ? { t: "yt", id: v.yt } : { t: "file", url: v.url }))
       };
       let r;
       if (editingId) r = await sb.from("posts").update(row).eq("id", editingId);
-      else r = await sb.from("posts").insert({ ...row, slug: (slugify(mem.en.title) || "post") + "-" + Math.random().toString(36).slice(2, 6) });
+      else r = await sb.from("posts").insert({ ...row, slug: editingSlug || (slugify(mem.en.title) || "post") + "-" + Math.random().toString(36).slice(2, 6) });
       if (r.error) throw r.error;
-      if (oldImage && storagePath(oldImage)) await sb.storage.from("post-images").remove([storagePath(oldImage)]);
+      const gone = [oldImage, ...removedMedia].map(storagePath).filter(Boolean);
+      if (gone.length) await sb.storage.from("post-images").remove(gone);
       say("Published. It is live on the site now."); reset(); loadList();
     } catch (err) { say("Could not save: " + (err.message || err), true); }
     $("saveBtn").disabled = false;
